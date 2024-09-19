@@ -8,6 +8,9 @@
     </Appenders>
 
     <Loggers>
+        <Logger name="your.package.name.ParserExample" level="info" additivity="false">
+            <AppenderRef ref="ConsoleAppender" />
+        </Logger>
         <!-- Root Logger: Configuration that applies to all loggers in the project -->
         <Root level="info">
             <AppenderRef ref="ConsoleAppender"/>

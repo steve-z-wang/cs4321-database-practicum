@@ -1,8 +1,21 @@
 package common;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import jdk.jshell.spi.ExecutionControl;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
-import operator.*;
+import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectItem;
+import operator.Operator;
+import operator.ProjectOperator;
+import operator.ScanOperator;
+import operator.SelectOperator;
 
 /**
  * Class to translate a JSQLParser statement into a relational algebra query plan. For now only
@@ -31,6 +44,33 @@ public class QueryPlanBuilder {
    */
   @SuppressWarnings("unchecked")
   public Operator buildPlan(Statement stmt) throws ExecutionControl.NotImplementedException {
-    throw new ExecutionControl.NotImplementedException("");
+
+    PlainSelect plainSelect = (PlainSelect) (Select) stmt;
+
+    Table table = (Table) plainSelect.getFromItem();
+    Expression where = plainSelect.getWhere();
+    List<SelectItem<?>> selectItems = plainSelect.getSelectItems();
+
+    // Set up scan operator
+    Operator operator = new ScanOperator(table);
+
+    // Set up select operator
+    if (where != null) {
+      operator = new SelectOperator((ScanOperator) operator, plainSelect.getWhere());
+    }
+
+    // Set up projection operator
+    SelectItem<?> firstItem = selectItems.get(0);
+    if (!(firstItem.getExpression() instanceof AllColumns)) {
+
+      ArrayList<Column> projectSchema =
+          selectItems.stream()
+              .map(selectItem -> (Column) selectItem.getExpression())
+              .collect(Collectors.toCollection(ArrayList::new));
+
+      operator = new ProjectOperator(operator, projectSchema);
+    }
+
+    return operator;
   }
 }

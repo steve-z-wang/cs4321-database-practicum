@@ -1,5 +1,4 @@
 import common.DBCatalog;
-import common.QueryPlanBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -9,14 +8,15 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import net.sf.jsqlparser.JSQLParserException;
-import net.sf.jsqlparser.expression.Alias;
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
-import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectItem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -44,31 +44,29 @@ public class ParserExample {
 
     Statements statements = CCJSqlParserUtil.parseStatements(Files.readString(queriesFilePath));
 
-    QueryPlanBuilder queryPlanBuilder = new QueryPlanBuilder();
-
-    for (Statement statement : statements.getStatements()) {
+    for (Statement statement : statements) {
       logger.info("Read statement: " + statement);
 
       Select select = (Select) statement;
-      PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+      PlainSelect plainSelect = (PlainSelect) select;
 
       Table fromItem = (Table) plainSelect.getFromItem();
+      logger.info("Table: " + fromItem);
 
-      logger.info("Select body is " + select.getSelectBody());
-      logger.info("From item is " + fromItem);
+      Expression where = plainSelect.getWhere();
+      if (where != null) {
+        logger.info("Where: " + where.toString());
+      }
 
-      Alias alias = fromItem.getAlias();
-      String name = fromItem.getName();
+      List<SelectItem<?>> selectItems = plainSelect.getSelectItems();
+      logger.info("Select: " + selectItems.toString());
 
-      logger.info("Alias: " + alias);
-      logger.info("Name: " + name);
+      SelectItem<?> firstItem = selectItems.get(0);
 
-      List<Join> joins = plainSelect.getJoins();
-
-      if (joins != null) {
-        for (Join join : plainSelect.getJoins()) {
-          // Process joins..
-        }
+      if (firstItem.getExpression() instanceof Column) {
+        logger.info("First Select Item: " + firstItem.toString());
+      } else {
+        logger.info("First Select Item: " + firstItem.toString());
       }
     }
   }
