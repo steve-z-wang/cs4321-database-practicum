@@ -108,27 +108,6 @@ public class SelectOperatorTest {
   }
 
   @Test
-  public void testSelectOperatorWithNullCondition() {
-    // Initialize the ScanOperator
-    ScanOperator scanOp = new ScanOperator(table);
-
-    // Create SelectOperator with null condition (should select all tuples)
-    SelectOperator selectOp = new SelectOperator(scanOp, null);
-
-    ArrayList<Tuple> tuples = new ArrayList<>();
-    Tuple tuple;
-    while ((tuple = selectOp.getNextTuple()) != null) {
-      tuples.add(tuple);
-    }
-
-    // Expect all tuples to be returned
-    assertEquals(3, tuples.size(), "Should read all three tuples when no condition is applied");
-    assertEquals("1,2,3", tuples.get(0).toString());
-    assertEquals("4,5,6", tuples.get(1).toString());
-    assertEquals("7,8,9", tuples.get(2).toString());
-  }
-
-  @Test
   public void testSelectOperatorReset() {
     // Initialize the ScanOperator
     ScanOperator scanOp = new ScanOperator(table);

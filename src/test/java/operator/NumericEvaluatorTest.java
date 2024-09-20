@@ -31,7 +31,7 @@ class NumericEvaluatorTest {
 
     // Create a Tuple with some values and set it in the ExpressionContext
     Tuple tuple = new Tuple("10,20,30"); // Assuming Tuple takes Integer array
-    expressionContext.setTuple(tuple);
+    expressionContext.setContext(tuple.getAllElements());
   }
 
   @Test

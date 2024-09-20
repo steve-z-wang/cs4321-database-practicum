@@ -29,7 +29,7 @@ class ExpressionContextTest {
   public void testSetAndGetValue() {
     // Create a Tuple with values and set it in the ExpressionContext
     Tuple tuple = new Tuple("10,20,30"); // Assuming Tuple takes Integer array
-    expressionContext.setTuple(tuple);
+    expressionContext.setContext(tuple.getAllElements());
 
     // Retrieve values by column name
     Integer value1 = expressionContext.getValue("col1");
@@ -46,7 +46,7 @@ class ExpressionContextTest {
   public void testGetValueNonExistentColumn() {
     // Create a Tuple and set it in the ExpressionContext
     Tuple tuple = new Tuple("10,20,30");
-    expressionContext.setTuple(tuple);
+    expressionContext.setContext(tuple.getAllElements());
 
     // Try to get a value for a non-existent column
     Integer value = expressionContext.getValue("col4");
@@ -64,12 +64,12 @@ class ExpressionContextTest {
   public void testSetNewTuple() {
     // Set the first tuple
     Tuple tuple1 = new Tuple("10,20,30");
-    expressionContext.setTuple(tuple1);
+    expressionContext.setContext(tuple1.getAllElements());
     assertEquals(10, expressionContext.getValue("col1"));
 
     // Set a new tuple and verify the updated values
     Tuple tuple2 = new Tuple("40,50,60");
-    expressionContext.setTuple(tuple2);
+    expressionContext.setContext(tuple2.getAllElements());
     assertEquals(
         40,
         expressionContext.getValue("col1"),

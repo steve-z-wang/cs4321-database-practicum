@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +28,11 @@ public class ScanOperator extends Operator {
    * @param outputSchema
    */
   public ScanOperator(Table table) {
-    super(dbCatalog.getSchemaForTable(table.getName()));
+    super(null);
+
+    // set output schema
+    ArrayList<Column> columns = dbCatalog.getSchemaForTable(table.getName());
+    this.outputSchema = new ArrayList<>(columns);
 
     // get file
     file = dbCatalog.getFileForTable(table.getName());

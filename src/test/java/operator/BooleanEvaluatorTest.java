@@ -40,7 +40,7 @@ class BooleanEvaluatorTest {
     tuple = new Tuple("10,20,30");
 
     // Set the tuple in the expression context
-    expressionContext.setTuple(tuple);
+    expressionContext.setContext(tuple.getAllElements());
   }
 
   @Test

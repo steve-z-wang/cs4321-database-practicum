@@ -1,6 +1,5 @@
 package operator;
 
-import common.Tuple;
 import java.util.ArrayList;
 import java.util.HashMap;
 import net.sf.jsqlparser.schema.Column;
@@ -8,7 +7,7 @@ import net.sf.jsqlparser.schema.Column;
 public class ExpressionContext {
 
   private final HashMap<String, Integer> columnIndexMap;
-  private Tuple tuple;
+  private ArrayList<Integer> context;
 
   public ExpressionContext(ArrayList<Column> schema) {
 
@@ -20,18 +19,18 @@ public class ExpressionContext {
     }
   }
 
-  public void setTuple(Tuple tuple) {
-    this.tuple = tuple;
+  public void setContext(ArrayList<Integer> context) {
+    this.context = context;
   }
 
   public Integer getValue(String columnName) {
-    if (tuple == null) {
+    if (this.context == null) {
       return null;
     }
 
     Integer index = columnIndexMap.get(columnName);
     if (index != null) {
-      return tuple.getElementAtIndex(index);
+      return this.context.get(index);
     }
     return null;
   }

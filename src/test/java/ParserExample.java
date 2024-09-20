@@ -51,7 +51,11 @@ public class ParserExample {
       PlainSelect plainSelect = (PlainSelect) select;
 
       Table fromItem = (Table) plainSelect.getFromItem();
-      logger.info("Table: " + fromItem);
+      logger.info("Table: " + fromItem.getName());
+      logger.info("Alias: " + fromItem.getAlias());
+
+      List<Table> intoTables = plainSelect.getIntoTables();
+      logger.info("intoTables: " + intoTables);
 
       Expression where = plainSelect.getWhere();
       if (where != null) {

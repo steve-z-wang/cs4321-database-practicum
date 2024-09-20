@@ -19,13 +19,13 @@ import org.mockito.Mockito;
 
 class ProjectOperatorTest {
 
-  private ScanOperator inputOperator;
+  private Operator inputOperator;
   private ProjectOperator projectOperator;
 
   @BeforeEach
   void setUp() {
     // Mock the input operator (even though it's abstract)
-    inputOperator = Mockito.mock(ScanOperator.class);
+    inputOperator = Mockito.mock(Operator.class);
 
     // Set up the input schema (InputOperator's output schema)
     Table table = new Table("test_table");

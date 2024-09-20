@@ -11,19 +11,17 @@ public class ProjectOperator extends Operator {
   private final ArrayList<Integer> inputToOutMapping = new ArrayList<>();
 
   public ProjectOperator(Operator operator, ArrayList<Column> outputSchema) {
-    super(outputSchema);
+    super(null);
 
     this.inputOperator = operator;
 
+    // Set output schema
+    this.outputSchema = new ArrayList<>(this.inputOperator.getOutputSchema());
+
     // create a mapping from input schema to output schema
-
-    // get input schema
-    ArrayList<Column> inputColumns = this.inputOperator.getOutputSchema();
-
-    // create a hashmap for input schema
     HashMap<String, Integer> inputColumnMap = new HashMap<>();
-    for (int i = 0; i < inputColumns.size(); i++) {
-      inputColumnMap.put(inputColumns.get(i).toString(), i);
+    for (int i = 0; i < this.outputSchema.size(); i++) {
+      inputColumnMap.put(this.outputSchema.get(i).toString(), i);
     }
 
     // create the mapping
