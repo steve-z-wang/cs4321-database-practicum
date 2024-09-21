@@ -8,26 +8,29 @@ import net.sf.jsqlparser.schema.Column;
 public class ProjectOperator extends Operator {
 
   private final Operator inputOperator;
-  private final ArrayList<Integer> inputToOutMapping = new ArrayList<>();
+  private final ArrayList<Integer> outputIndexToInputIndexMap = new ArrayList<>();
 
   public ProjectOperator(Operator operator, ArrayList<Column> outputSchema) {
     super(null);
 
     this.inputOperator = operator;
+    ArrayList<Column> inputSchema = operator.getOutputSchema();
 
     // Set output schema
     this.outputSchema = new ArrayList<>(this.inputOperator.getOutputSchema());
 
     // create a mapping from input schema to output schema
-    HashMap<String, Integer> inputColumnMap = new HashMap<>();
-    for (int i = 0; i < this.outputSchema.size(); i++) {
-      inputColumnMap.put(this.outputSchema.get(i).toString(), i);
+    HashMap<String, Integer> columnNameToInputIndexMap = new HashMap<>();
+    for (int i = 0; i < inputSchema.size(); i++) {
+      String key = inputSchema.get(i).getFullyQualifiedName(true);
+      columnNameToInputIndexMap.put(key, i);
     }
 
     // create the mapping
     for (Column column : outputSchema) {
-      int index = inputColumnMap.get(column.toString());
-      this.inputToOutMapping.add(index);
+      String key = column.getFullyQualifiedName(true);
+      int index = columnNameToInputIndexMap.get(key);
+      this.outputIndexToInputIndexMap.add(index);
     }
   }
 
@@ -48,7 +51,7 @@ public class ProjectOperator extends Operator {
 
     // create ouput with mapping
     ArrayList<Integer> outputList = new ArrayList<>();
-    for (Integer index : inputToOutMapping) {
+    for (Integer index : this.outputIndexToInputIndexMap) {
       outputList.add(inputTuple.getElementAtIndex(index));
     }
 

@@ -19,16 +19,21 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
+import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectItem;
+import operator.BooleanEvaluator;
+import operator.DuplicateEliminationOperator;
 import operator.JoinOperator;
 import operator.Operator;
 import operator.ProjectOperator;
 import operator.ScanOperator;
 import operator.SelectOperator;
+import operator.SortOperator;
 
 /**
  * Class to translate a JSQLParser statement into a relational algebra query plan. For now only
@@ -65,6 +70,8 @@ public class QueryPlanBuilder {
     FromItem fromItem = plainSelect.getFromItem();
     List<Join> Joins = plainSelect.getJoins();
     Expression where = plainSelect.getWhere();
+    List<OrderByElement> orderByElements = plainSelect.getOrderByElements();
+    Distinct distinct = plainSelect.getDistinct();
 
     // Create the initial operator for fromItem
     Table mainTable = (Table) fromItem;
@@ -82,8 +89,7 @@ public class QueryPlanBuilder {
       where.accept(whereClauseProcessor, null);
 
       // Filter conditions for the main table
-      Expression filterCondition =
-          whereClauseProcessor.getFilterConditionsByTable(mainTable.getName());
+      Expression filterCondition = whereClauseProcessor.getFilterConditionsByTable(mainTable);
       if (filterCondition != null) {
         operator = new SelectOperator(operator, filterCondition);
       }
@@ -97,14 +103,13 @@ public class QueryPlanBuilder {
         operator = new ScanOperator(joinTable);
 
         // Push down filter conditions
-        filterCondition = whereClauseProcessor.getFilterConditionsByTable(joinTable.getName());
+        filterCondition = whereClauseProcessor.getFilterConditionsByTable(joinTable);
         if (filterCondition != null) {
           operator = new SelectOperator(operator, filterCondition);
         }
 
         // Add join conditions
-        Expression joinCondition =
-            whereClauseProcessor.getJoinConditionsByTable(previousTable.getName());
+        Expression joinCondition = whereClauseProcessor.getJoinConditionsByTable(previousTable);
         operator = new JoinOperator(previousOperator, operator, joinCondition);
 
         previousOperator = operator;
@@ -112,7 +117,8 @@ public class QueryPlanBuilder {
     }
 
     // Create a project operator if not selecting all columns
-    if (!(selectItems.get(0).getExpression() instanceof AllColumns)) {
+    boolean useProject = !(selectItems.get(0).getExpression() instanceof AllColumns);
+    if (useProject) {
 
       ArrayList<Column> projectSchema = new ArrayList<>();
       for (SelectItem<?> selectItem : selectItems) {
@@ -120,6 +126,18 @@ public class QueryPlanBuilder {
       }
 
       operator = new ProjectOperator(operator, projectSchema);
+    }
+
+    // If Order by exists
+    boolean useSort = orderByElements != null;
+    if (useSort) {
+      operator = new SortOperator(operator, orderByElements);
+    }
+
+    // If use distance
+    boolean useDistinct = distinct != null;
+    if (useDistinct) {
+      operator = new DuplicateEliminationOperator(operator);
     }
 
     return operator;
@@ -132,26 +150,32 @@ class WhereClauseProcessor extends ExpressionVisitorAdapter<Object> {
   private final Map<String, Expression> filterConditions = new HashMap<>();
 
   public WhereClauseProcessor(FromItem fromItem, List<Join> joins) {
-    String mainTableName = ((Table) fromItem).getName();
-    tableOrder.put(mainTableName, 0);
-    joinConditions.put(mainTableName, null);
-    filterConditions.put(mainTableName, null);
+    initializeTable((Table) fromItem, 0); // Initialize the main table
 
     int index = 1;
     for (Join join : joins) {
-      String joinTableName = ((Table) join.getRightItem()).getName();
-      tableOrder.put(joinTableName, index++);
-      joinConditions.put(joinTableName, null);
-      filterConditions.put(joinTableName, null);
+      Table joinTable = (Table) join.getRightItem();
+      initializeTable(joinTable, index++);
     }
   }
 
-  public Expression getJoinConditionsByTable(String tableName) {
-    return joinConditions.get(tableName);
+  private void initializeTable(Table table, int index) {
+    String tableKey = getTableKey(table);
+    tableOrder.put(tableKey, index);
+    joinConditions.put(tableKey, null);
+    filterConditions.put(tableKey, null);
   }
 
-  public Expression getFilterConditionsByTable(String tableName) {
-    return filterConditions.get(tableName);
+  private String getTableKey(Table table) {
+    return (table.getAlias() != null) ? table.getAlias().getName() : table.getName();
+  }
+
+  public Expression getJoinConditionsByTable(Table table) {
+    return joinConditions.get(getTableKey(table));
+  }
+
+  public Expression getFilterConditionsByTable(Table table) {
+    return filterConditions.get(getTableKey(table));
   }
 
   @Override
@@ -203,39 +227,49 @@ class WhereClauseProcessor extends ExpressionVisitorAdapter<Object> {
 
     if (leftExpr instanceof Column leftColumn && rightExpr instanceof Column rightColumn) {
       // If both sides are columns, check their tables
-      String leftTable = leftColumn.getTable().getName();
-      String rightTable = rightColumn.getTable().getName();
+      String leftTableKey = getTableKey(leftColumn.getTable());
+      String rightTableKey = getTableKey(rightColumn.getTable());
 
-      if (!leftTable.equals(rightTable)) {
+      if (!leftTableKey.equals(rightTableKey)) {
         // Columns are from different tables, handle as join condition
-        handleJoinCondition(comparison, leftColumn, rightColumn);
+        handleJoinCondition(comparison, leftTableKey, rightTableKey);
       } else {
         // Columns are from the same table, handle as filter condition
-        handleFilterCondition(comparison, leftColumn);
+        handleFilterCondition(comparison, leftTableKey);
       }
     } else if (leftExpr instanceof Column leftColumn) {
-      handleFilterCondition(comparison, leftColumn);
+      // If the left is a Column
+
+      String leftTableKey = getTableKey(leftColumn.getTable());
+      handleFilterCondition(comparison, leftTableKey);
     } else if (rightExpr instanceof Column rightColumn) {
-      handleFilterCondition(comparison, rightColumn);
+      // if the right is a Column
+
+      String rightTableKey = getTableKey(rightColumn.getTable());
+      handleFilterCondition(comparison, rightTableKey);
+    } else {
+      // if non is a Column, we can evaulate it now
+      BooleanEvaluator booleanEvaluator = new BooleanEvaluator();
+      Boolean isTrue = comparison.accept(booleanEvaluator, null);
+      if (!isTrue) {
+        // TODO
+      }
     }
   }
 
-  private void handleJoinCondition(Expression comparison, Column leftColumn, Column rightColumn) {
-    String leftTable = leftColumn.getTable().getName();
-    String rightTable = rightColumn.getTable().getName();
-
-    if (tableOrder.get(leftTable) < tableOrder.get(rightTable)) {
+  private void handleJoinCondition(
+      Expression comparison, String leftTableKey, String rightTableKey) {
+    if (tableOrder.get(leftTableKey) < tableOrder.get(rightTableKey)) {
       joinConditions.merge(
-          leftTable, comparison, (existing, newExpr) -> new AndExpression(existing, newExpr));
+          leftTableKey, comparison, (existing, newExpr) -> new AndExpression(existing, newExpr));
     } else {
       joinConditions.merge(
-          rightTable, comparison, (existing, newExpr) -> new AndExpression(existing, newExpr));
+          rightTableKey, comparison, (existing, newExpr) -> new AndExpression(existing, newExpr));
     }
   }
 
-  private void handleFilterCondition(Expression comparison, Column column) {
-    String tableName = column.getTable().getName();
+  private void handleFilterCondition(Expression comparison, String tableKey) {
     filterConditions.merge(
-        tableName, comparison, (existing, newExpr) -> new AndExpression(existing, newExpr));
+        tableKey, comparison, (existing, newExpr) -> new AndExpression(existing, newExpr));
   }
 }

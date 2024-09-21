@@ -18,8 +18,7 @@ public class NumericEvaluator extends ExpressionVisitorAdapter<Integer> {
 
   @Override
   public <S> Integer visit(Column column, S context) {
-
     ExpressionContext expressionContext = (ExpressionContext) context;
-    return expressionContext.getValue(column.getColumnName());
+    return expressionContext.getValue(column);
   }
 }

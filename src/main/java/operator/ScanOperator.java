@@ -30,9 +30,15 @@ public class ScanOperator extends Operator {
   public ScanOperator(Table table) {
     super(null);
 
-    // set output schema
-    ArrayList<Column> columns = dbCatalog.getSchemaForTable(table.getName());
-    this.outputSchema = new ArrayList<>(columns);
+    this.outputSchema = new ArrayList<>();
+
+    // Create output schema with table with alias
+    ArrayList<Column> dbSchema = dbCatalog.getSchemaForTable(table.getName());
+    for (Column dbSchemaColumn : dbSchema) {
+      String columnName = dbSchemaColumn.getColumnName();
+      Column outputSchemaColumn = new Column(table, columnName);
+      this.outputSchema.add(outputSchemaColumn);
+    }
 
     // get file
     file = dbCatalog.getFileForTable(table.getName());

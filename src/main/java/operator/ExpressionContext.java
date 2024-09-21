@@ -6,16 +6,17 @@ import net.sf.jsqlparser.schema.Column;
 
 public class ExpressionContext {
 
-  private final HashMap<String, Integer> columnIndexMap;
+  private final HashMap<String, Integer> columnNameToIndexMap;
   private ArrayList<Integer> context;
 
-  public ExpressionContext(ArrayList<Column> schema) {
+  public ExpressionContext(ArrayList<Column> contextSchema) {
 
-    columnIndexMap = new HashMap<>();
+    columnNameToIndexMap = new HashMap<>();
 
-    for (int i = 0; i < schema.size(); i++) {
-      Column column = schema.get(i);
-      columnIndexMap.put(column.getColumnName(), i);
+    for (int i = 0; i < contextSchema.size(); i++) {
+      Column column = contextSchema.get(i);
+      String key = getColumnKey(column);
+      columnNameToIndexMap.put(key, i);
     }
   }
 
@@ -23,15 +24,21 @@ public class ExpressionContext {
     this.context = context;
   }
 
-  public Integer getValue(String columnName) {
+  public Integer getValue(Column column) {
+    // If context is not set return null
     if (this.context == null) {
       return null;
     }
 
-    Integer index = columnIndexMap.get(columnName);
+    Integer index = columnNameToIndexMap.get(getColumnKey(column));
     if (index != null) {
       return this.context.get(index);
     }
     return null;
+  }
+
+  public static String getColumnKey(Column column) {
+    // return alias name if exist
+    return column.getFullyQualifiedName(true);
   }
 }
