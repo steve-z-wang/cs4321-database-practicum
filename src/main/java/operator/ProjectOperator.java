@@ -17,7 +17,7 @@ public class ProjectOperator extends Operator {
     ArrayList<Column> inputSchema = operator.getOutputSchema();
 
     // Set output schema
-    this.outputSchema = new ArrayList<>(this.inputOperator.getOutputSchema());
+    this.outputSchema = new ArrayList<>(outputSchema);
 
     // create a mapping from input schema to output schema
     HashMap<String, Integer> columnNameToInputIndexMap = new HashMap<>();
@@ -27,7 +27,7 @@ public class ProjectOperator extends Operator {
     }
 
     // create the mapping
-    for (Column column : outputSchema) {
+    for (Column column : this.outputSchema) {
       String key = column.getFullyQualifiedName(true);
       int index = columnNameToInputIndexMap.get(key);
       this.outputIndexToInputIndexMap.add(index);

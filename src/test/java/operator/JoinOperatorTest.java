@@ -68,7 +68,7 @@ class JoinOperatorTest {
         .thenReturn(null); // Right operator returns a tuple and then null
 
     // Initialize the JoinOperator
-    joinOperator = new JoinOperator(leftOperator, rightOperator, null);
+    joinOperator = new JoinOperator(leftOperator, rightOperator);
 
     // Test getNextTuple
     Tuple result = joinOperator.getNextTuple();

@@ -22,11 +22,6 @@ public class ScanOperator extends Operator {
   private final File file;
   private BufferedReader reader;
 
-  /**
-   * Open a file scan on the approprate data file
-   *
-   * @param outputSchema
-   */
   public ScanOperator(Table table) {
     super(null);
 
@@ -42,9 +37,11 @@ public class ScanOperator extends Operator {
 
     // get file
     file = dbCatalog.getFileForTable(table.getName());
-
-    // set up reader
-    setupReader();
+    if (file == null) {
+      logger.error("Data file for table " + table.getName() + " not found.");
+    } else {
+      setupReader();
+    }
   }
 
   @Override
@@ -53,35 +50,33 @@ public class ScanOperator extends Operator {
     setupReader();
   }
 
-  /**
-   * Reads the next line from the file and returns the next tuple
-   *
-   * @return next Tuple, or null if we are at the end
-   */
   @Override
   public Tuple getNextTuple() {
-
     Tuple toReturn = null;
 
     try {
-      String nextLine = reader.readLine();
+      String nextLine = reader != null ? reader.readLine() : null;
       if (nextLine == null) {
         closeReader();
       } else {
         toReturn = new Tuple(nextLine);
       }
     } catch (IOException e) {
-      logger.error("Error reading next tuple in ScanOperator: ", e.getMessage());
+      logger.error("Error reading next tuple in ScanOperator: ", e);
     }
 
     return toReturn;
   }
 
   private void setupReader() {
-    try {
-      reader = new BufferedReader(new FileReader(file));
-    } catch (FileNotFoundException e) {
-      logger.error("File not found: ", e.getMessage());
+    if (file != null) {
+      try {
+        reader = new BufferedReader(new FileReader(file));
+      } catch (FileNotFoundException e) {
+        logger.error("File not found: " + file.getName(), e);
+      }
+    } else {
+      logger.error("File is null, cannot set up reader.");
     }
   }
 
@@ -89,6 +84,7 @@ public class ScanOperator extends Operator {
     if (reader != null) {
       try {
         reader.close();
+        reader = null; // reset reader to null
       } catch (IOException e) {
         logger.error("Error closing reader in ScanOperator: ", e);
       }

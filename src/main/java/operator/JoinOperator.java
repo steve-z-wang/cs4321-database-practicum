@@ -15,6 +15,25 @@ public class JoinOperator extends Operator {
   private final BooleanEvaluator evaluator = new BooleanEvaluator();
   private Tuple leftTuple;
 
+  public JoinOperator(Operator leftOperator, Operator rightOperator) {
+    super(null);
+
+    this.leftOperator = leftOperator;
+    this.rightOperator = rightOperator;
+    this.expression = null;
+
+    // Set output schema as the combine of left and right operators' schema
+    this.outputSchema = new ArrayList<>(leftOperator.getOutputSchema());
+    this.outputSchema.addAll(rightOperator.getOutputSchema());
+
+    // Context
+    this.selectedGetNextTuple = this::getNextTupleWithoutExpression;
+    this.expressionContext = null;
+
+    // Set first left tuple
+    this.leftTuple = leftOperator.getNextTuple();
+  }
+
   public JoinOperator(Operator leftOperator, Operator rightOperator, Expression expression) {
     super(null);
 
@@ -26,14 +45,8 @@ public class JoinOperator extends Operator {
     this.outputSchema = new ArrayList<>(leftOperator.getOutputSchema());
     this.outputSchema.addAll(rightOperator.getOutputSchema());
 
-    // Set expression context
-    if (this.expression != null) {
-      this.selectedGetNextTuple = this::getNextTupleWithExpression;
-      this.expressionContext = new ExpressionContext(this.outputSchema);
-    } else {
-      this.selectedGetNextTuple = this::getNextTupleWithoutExpression;
-      this.expressionContext = null;
-    }
+    this.selectedGetNextTuple = this::getNextTupleWithExpression;
+    this.expressionContext = new ExpressionContext(this.outputSchema);
 
     // Set first left tuple
     this.leftTuple = leftOperator.getNextTuple();
