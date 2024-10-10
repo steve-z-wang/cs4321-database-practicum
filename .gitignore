@@ -1,13 +1,11 @@
-# Ignore build output directories
+# generated files
 build/
+bin/
+logs/
 
 # Ignore Gradle-specific files
 .gradle/
 
-# Ignore binary output files
-bin/
-
 # Ignore IDE-specific files
 .vscode/
-
-
+.idea/
