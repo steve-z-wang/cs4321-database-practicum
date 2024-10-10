@@ -16,10 +16,10 @@ import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
-import operator.Operator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import physicaloperator.Operator;
 
 public class P1UnitTests {
   private static List<Statement> statementList;
@@ -33,6 +33,9 @@ public class P1UnitTests {
     Path resourcePath = Paths.get(path);
 
     DBCatalog.getInstance().setDataDirectory(resourcePath.resolve("db").toString());
+
+    // Generate binary input files
+    HelperMethods.generateBinaryInputFile(resourcePath.resolve("db").toString());
 
     URI queriesFile =
         Objects.requireNonNull(classLoader.getResource("samples/input/queries.sql")).toURI();
@@ -359,33 +362,10 @@ public class P1UnitTests {
     }
   }
 
-  public void testQuery11() throws ExecutionControl.NotImplementedException {
-    // Assuming the query is at index 17 in the statementList
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(10));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 2;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(Arrays.asList(2, 103))),
-          new Tuple(new ArrayList<>(Arrays.asList(6, 107)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
   @Test
-  public void testQuery12() throws ExecutionControl.NotImplementedException {
+  public void testQuery11() throws ExecutionControl.NotImplementedException {
     // Assuming the query with always false condition is at index 11 in the statementList
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(11));
+    Operator plan = queryPlanBuilder.buildPlan(statementList.get(10));
 
     List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
 

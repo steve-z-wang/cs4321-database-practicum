@@ -77,7 +77,7 @@ to fetch.
 ### One branch per deliverable
 For every new deliverable, you will need to create a new branch. This will make it easier for you to keep track of your
 changes across different deliverables, and will make debugging easier (i.e. a wrong output result or a performance 
-degradation in an operator that used to work well in the past).
+degradation in an physicaloperator that used to work well in the past).
 
 ### Example
 When you start, the default branch will be the `main`. You can verify that by typing:

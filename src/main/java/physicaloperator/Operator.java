@@ -1,6 +1,7 @@
-package operator;
+package physicaloperator;
 
 import common.Tuple;
+import common.TupleWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,5 +60,13 @@ public abstract class Operator {
     while ((t = this.getNextTuple()) != null) {
       printStream.println(t);
     }
+  }
+
+  public void dump(TupleWriter writer) {
+    Tuple t;
+    while ((t = this.getNextTuple()) != null) {
+      writer.writeTuple(t);
+    }
+    writer.close();
   }
 }

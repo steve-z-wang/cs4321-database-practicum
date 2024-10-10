@@ -1,17 +1,17 @@
 package compiler;
 
+import common.BinaryTupleWriter;
 import common.DBCatalog;
 import common.QueryPlanBuilder;
 import java.io.File;
-import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
-import operator.Operator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import physicaloperator.Operator;
 
 /**
  * Top level harness class; reads queries from an input file one at a time, processes them and sends
@@ -57,7 +57,8 @@ public class Compiler {
 
           if (outputToFiles) {
             File outfile = new File(outputDir + "/query" + counter);
-            plan.dump(new PrintStream(outfile));
+            plan.dump(
+                new BinaryTupleWriter(outfile.getAbsolutePath(), plan.getOutputSchema().size()));
           } else {
             plan.dump(System.out);
           }

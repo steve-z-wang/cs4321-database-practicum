@@ -1,0 +1,28 @@
+package logicaloperator;
+
+import java.util.ArrayList;
+import net.sf.jsqlparser.schema.Column;
+
+public class LogicalProject {
+
+  private final LogicalOperator childOperator;
+  private final ArrayList<Column> outputSchema;
+
+  public LogicalProject(LogicalOperator child, ArrayList<Column> outputSchema) {
+    this.childOperator = child;
+    this.outputSchema = outputSchema;
+  }
+
+  public LogicalOperator getChildOperator() {
+    return childOperator;
+  }
+
+  public ArrayList<Column> getOutputSchema() {
+    return outputSchema;
+  }
+
+  @Override
+  public String toString() {
+    return "Project[" + childOperator.toString() + "]";
+  }
+}

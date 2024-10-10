@@ -1,4 +1,4 @@
-package operator;
+package physicaloperator;
 
 import java.util.ArrayList;
 import java.util.HashMap;

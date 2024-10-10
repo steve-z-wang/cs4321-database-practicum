@@ -1,4 +1,4 @@
-package operator;
+package physicaloperator;
 
 import common.Tuple;
 import java.util.ArrayList;
@@ -14,6 +14,9 @@ public class SelectOperator extends Operator {
 
   public SelectOperator(Operator operator, Expression expression) {
     super(null);
+
+    assert operator != null : "Operator cannot be null";
+    assert expression != null : "Expression cannot be null";
 
     this.inputOperator = operator;
     this.expression = expression;
