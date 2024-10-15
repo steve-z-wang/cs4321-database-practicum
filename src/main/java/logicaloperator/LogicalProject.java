@@ -1,9 +1,11 @@
 package logicaloperator;
 
 import java.util.ArrayList;
+
+import common.LogicalOperatorVisitor;
 import net.sf.jsqlparser.schema.Column;
 
-public class LogicalProject {
+public class LogicalProject extends LogicalOperator {
 
   private final LogicalOperator childOperator;
   private final ArrayList<Column> outputSchema;
@@ -24,5 +26,10 @@ public class LogicalProject {
   @Override
   public String toString() {
     return "Project[" + childOperator.toString() + "]";
+  }
+
+  @Override
+  public void accept(LogicalOperatorVisitor visitor) {
+    visitor.visit(this);
   }
 }

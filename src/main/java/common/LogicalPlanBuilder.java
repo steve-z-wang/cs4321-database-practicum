@@ -1,12 +1,16 @@
 package common;
 
+import java.util.ArrayList;
 import java.util.List;
 import logicaloperator.LogicalOperator;
 import logicaloperator.LogicalScan;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.*;
+import logicaloperator.*;
+import physicaloperator.*;
 
 public class LogicalPlanBuilder {
 
@@ -28,13 +32,80 @@ public class LogicalPlanBuilder {
     Table mainTable = (Table) fromItem;
     LogicalOperator operator = new LogicalScan(mainTable);
 
-    // TODO
-    // Implement the rest of the LogicalPlanBuilder
-    // Copy the logic from QueryPlanBuilder and modify it to build logical operators
-    // after that
-    // create the PhysicalPlanBuilder class and implement the buildPhysicalPlan method
-    // which will take the logical operator and convert it to a physical operator using the Visitor
-    // pattern
+    // If there are no joins but a WHERE clause exists, apply selection filtering
+    if (Joins == null && where != null) {
+      operator = new LogicalSelect(operator, where);
+    }
+    // If joins exist but no WHERE clause, process the joins without filtering
+    else if (Joins != null && where == null) {
+
+      LogicalOperator previousOperator = operator;
+      for (Join join : Joins) {
+        Table joinTable = (Table) join.getRightItem();
+        operator = new LogicalScan(joinTable);
+        operator = new LogicalJoin(previousOperator, operator,null);
+        previousOperator = operator;
+      }
+    }
+
+    else if (Joins != null && where != null) {
+
+      // Process where clause
+      WhereClauseProcessor whereClauseProcessor = new WhereClauseProcessor(fromItem, Joins);
+      where.accept(whereClauseProcessor, null);
+
+      // Filter conditions for the main table
+      Expression filterCondition = whereClauseProcessor.getFilterConditionsByTable(mainTable);
+      if (filterCondition != null) {
+        operator = new LogicalSelect(operator, filterCondition);
+      }
+
+      // Process joins and apply join conditions where appropriate
+      LogicalOperator previousOperator = operator;
+      Table previousTable = mainTable;
+      for (Join join : Joins) {
+        Table joinTable = (Table) join.getRightItem();
+
+        // Create a scan operator for each table
+        operator = new LogicalScan(joinTable);
+
+        // Apply filter conditions for each join table
+        filterCondition = whereClauseProcessor.getFilterConditionsByTable(joinTable);
+        if (filterCondition != null) {
+          operator = new LogicalSelect(operator, filterCondition);
+        }
+
+        // Add join conditions to the join operator
+        Expression joinCondition = whereClauseProcessor.getJoinConditionsByTable(previousTable);
+        operator = new LogicalJoin(previousOperator, operator, joinCondition);
+
+        previousOperator = operator;
+      }
+    }
+
+    // Create a project operator if not selecting all columns
+    boolean useProject = !(selectItems.get(0).getExpression() instanceof AllColumns);
+    if (useProject) {
+
+      ArrayList<Column> projectSchema = new ArrayList<>();
+      for (SelectItem<?> selectItem : selectItems) {
+        projectSchema.add((Column) selectItem.getExpression());
+      }
+
+      operator = new LogicalProject(operator, projectSchema);
+    }
+
+    // If Order by exists
+    boolean useSort = orderByElements != null;
+    if (useSort) {
+      operator = new LogicalSort(operator, orderByElements);
+    }
+
+    // If use distance
+    boolean useDistinct = distinct != null;
+    if (useDistinct) {
+      operator = new LogicalDistinct(operator);
+    }
 
     return operator;
   }

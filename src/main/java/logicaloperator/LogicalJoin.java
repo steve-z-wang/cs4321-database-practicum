@@ -1,8 +1,9 @@
 package logicaloperator;
 
+import common.LogicalOperatorVisitor;
 import net.sf.jsqlparser.expression.Expression;
 
-public class LogicalJoin {
+public class LogicalJoin extends LogicalOperator {
 
   private final LogicalOperator leftChild;
   private final LogicalOperator rightChild;
@@ -24,6 +25,11 @@ public class LogicalJoin {
 
   public Expression getCondition() {
     return condition;
+  }
+
+  @Override
+  public void accept(LogicalOperatorVisitor visitor) {
+    visitor.visit(this);
   }
 
   @Override

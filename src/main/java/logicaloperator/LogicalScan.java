@@ -1,5 +1,6 @@
 package logicaloperator;
 
+import common.LogicalOperatorVisitor;
 import net.sf.jsqlparser.schema.Table;
 
 public class LogicalScan extends LogicalOperator {
@@ -16,5 +17,10 @@ public class LogicalScan extends LogicalOperator {
   @Override
   public String toString() {
     return "Scan[" + table.getName() + "]";
+  }
+
+  @Override
+  public void accept(LogicalOperatorVisitor visitor) {
+    visitor.visit(this);
   }
 }
