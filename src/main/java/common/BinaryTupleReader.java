@@ -5,56 +5,63 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class contains the logic that read tuples by pages The input files are of binary format The
  * class will utilize java nio to read the files
  */
-public class BinaryTupleReader implements TupleReader {
-  private final int PAGE_SIZE;
-  private final int INT_SIZE = 4;
-  private final int TUPLE_SIZE;
+public class BinaryTupleReader extends TupleReader {
 
-  private final FileChannel fileChannel;
+  private static final Logger logger = LogManager.getLogger();
+
+  private final int INT_SIZE = 4;
+  private int TUPLE_SIZE;
+
+  private FileChannel fileChannel = null;
   private final ByteBuffer buffer;
   private int remainingTuples;
   private int bufferIndex;
 
-  public BinaryTupleReader(String filePath, int tupleSize) throws IOException {
-    this(filePath, tupleSize, 4096);
+  public BinaryTupleReader(String filePath) {
+    this(filePath, 4096);
   }
 
-  public BinaryTupleReader(String filePath, int tupleSize, int pageSize) throws IOException {
-    this.PAGE_SIZE = pageSize;
-    this.TUPLE_SIZE = tupleSize;
+  public BinaryTupleReader(String filePath, int pageSize) {
+    try {
+      this.fileChannel = new FileInputStream(filePath).getChannel();
+    } catch (IOException e) {
+      logger.error("Error creating BinaryTupleReader: ", e);
+    }
 
-    this.fileChannel = new FileInputStream(filePath).getChannel();
-    this.buffer = ByteBuffer.allocate(this.PAGE_SIZE);
-
+    this.buffer = ByteBuffer.allocate(pageSize);
     readPage();
   }
 
-  private boolean readPage() throws IOException {
+  private boolean readPage() {
     buffer.clear();
-    int bytesRead = this.fileChannel.read(this.buffer);
-    if (bytesRead == -1) {
+
+    try {
+      int bytesRead = this.fileChannel.read(this.buffer);
+      if (bytesRead == -1) {
+        return false;
+      }
+    } catch (IOException e) {
+      logger.error("Error reading page: ", e);
       return false;
     }
 
     buffer.flip();
 
-    // Guard against file corruption (e.g. not enough bytes for tuple size/remaining count)
-    if (buffer.remaining() < 2 * INT_SIZE) {
-      throw new IOException("Corrupted page or incomplete file.");
-    }
-
+    this.TUPLE_SIZE = this.buffer.getInt(0);
     this.remainingTuples = this.buffer.getInt(INT_SIZE);
     this.bufferIndex = 2 * INT_SIZE;
     return true;
   }
 
   @Override
-  public Tuple getNextTuple() throws IOException {
+  public Tuple getNextTuple() {
     if (remainingTuples <= 0) {
       if (!readPage()) {
         return null;
@@ -72,18 +79,21 @@ public class BinaryTupleReader implements TupleReader {
   }
 
   @Override
-  public void reset() throws IOException {
-    fileChannel.position(0);
+  public void reset() {
+    try {
+      this.fileChannel.position(0);
+    } catch (IOException e) {
+      logger.error("Error resetting BinaryTupleReader: ", e);
+    }
     readPage();
   }
 
   @Override
-  public void close() throws IOException {
-    fileChannel.close();
-  }
-
-  @Override
-  public int getTupleSize() {
-    return this.TUPLE_SIZE;
+  public void close() {
+    try {
+      this.fileChannel.close();
+    } catch (IOException e) {
+      logger.error("Error closing BinaryTupleReader: ", e);
+    }
   }
 }

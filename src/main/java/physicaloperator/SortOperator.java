@@ -9,7 +9,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 
 public class SortOperator extends Operator {
-  private final Operator inputOperator;
+  private final Operator childOperator;
   private final ArrayList<Tuple> internalBuffer;
   private final List<OrderByElement> orderByElements;
   private int curIndex;
@@ -17,7 +17,7 @@ public class SortOperator extends Operator {
   public SortOperator(Operator operator, List<OrderByElement> orderByElements) {
     super(operator.getOutputSchema());
 
-    this.inputOperator = operator;
+    this.childOperator = operator;
     this.orderByElements = orderByElements;
 
     // Create internal Buffer
@@ -29,7 +29,7 @@ public class SortOperator extends Operator {
   @Override
   public void reset() {
     this.internalBuffer.clear();
-    this.inputOperator.reset();
+    this.childOperator.reset();
     loadAndSortBuffer();
   }
 
@@ -45,13 +45,13 @@ public class SortOperator extends Operator {
 
   private void loadAndSortBuffer() {
     Tuple tuple;
-    while ((tuple = this.inputOperator.getNextTuple()) != null) {
+    while ((tuple = this.childOperator.getNextTuple()) != null) {
       this.internalBuffer.add(tuple);
     }
 
     // Sort the buffer based on the specified order-by elements
     this.internalBuffer.sort(
-        new TupleComparator(this.orderByElements, this.inputOperator.getOutputSchema()));
+        new TupleComparator(this.orderByElements, this.childOperator.getOutputSchema()));
     this.curIndex = 0;
   }
 

@@ -1,8 +1,7 @@
 package logicaloperator;
 
-import java.util.List;
-
 import common.LogicalOperatorVisitor;
+import java.util.List;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 
 public class LogicalSort extends LogicalOperator {
@@ -25,12 +24,11 @@ public class LogicalSort extends LogicalOperator {
 
   @Override
   public String toString() {
-    return "Sort[" + childOperator.toString() + "by" + OrderByElements + "]";
+    return "Sort[" + childOperator.toString() + " by " + OrderByElements + "]";
   }
 
   @Override
   public void accept(LogicalOperatorVisitor visitor) {
     visitor.visit(this);
   }
-
 }

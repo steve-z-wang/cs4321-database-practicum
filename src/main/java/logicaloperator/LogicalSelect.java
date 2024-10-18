@@ -3,7 +3,7 @@ package logicaloperator;
 import common.LogicalOperatorVisitor;
 import net.sf.jsqlparser.expression.Expression;
 
-public class LogicalSelect extends LogicalOperator{
+public class LogicalSelect extends LogicalOperator {
   private final LogicalOperator childOperator;
   private final Expression condition;
 

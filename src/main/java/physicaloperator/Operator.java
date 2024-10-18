@@ -4,7 +4,6 @@ import common.Tuple;
 import common.TupleWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.List;
 import net.sf.jsqlparser.schema.Column;
 
 /**
@@ -36,21 +35,6 @@ public abstract class Operator {
   public abstract Tuple getNextTuple();
 
   /**
-   * Collects all tuples of this operator.
-   *
-   * @return A list of Tuples.
-   */
-  public List<Tuple> getAllTuples() {
-    Tuple t;
-    List<Tuple> tuples = new ArrayList<>();
-    while ((t = getNextTuple()) != null) {
-      tuples.add(t);
-    }
-
-    return tuples;
-  }
-
-  /**
    * Iterate through output of operator and send it all to the specified printStream)
    *
    * @param printStream stream to receive output, one tuple per line.
@@ -62,6 +46,11 @@ public abstract class Operator {
     }
   }
 
+  /**
+   * Iterate through output of operator and send it all to the specified TupleWriter
+   *
+   * @param writer TupleWriter to receive output
+   */
   public void dump(TupleWriter writer) {
     Tuple t;
     while ((t = this.getNextTuple()) != null) {

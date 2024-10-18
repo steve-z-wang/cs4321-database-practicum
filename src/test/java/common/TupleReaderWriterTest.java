@@ -39,7 +39,7 @@ public class TupleReaderWriterTest {
 
     // Read the tuples from the file
     HumanReadableTupleReader reader =
-        new HumanReadableTupleReader(tempFile.toAbsolutePath().toString(), tupleSize);
+        new HumanReadableTupleReader(tempFile.toAbsolutePath().toString());
     Tuple readTuple1 = reader.getNextTuple();
     Tuple readTuple2 = reader.getNextTuple();
     Tuple readTuple3 = reader.getNextTuple();
@@ -66,7 +66,7 @@ public class TupleReaderWriterTest {
     writer.close();
 
     // Read the tuples from the file
-    BinaryTupleReader reader = new BinaryTupleReader(tempFile.toString(), tupleSize);
+    BinaryTupleReader reader = new BinaryTupleReader(tempFile.toString());
     Tuple readTuple1 = reader.getNextTuple();
     Tuple readTuple2 = reader.getNextTuple();
     Tuple readTuple3 = reader.getNextTuple();
@@ -99,7 +99,7 @@ public class TupleReaderWriterTest {
     writer.close();
 
     // Read the tuples from the file
-    BinaryTupleReader reader = new BinaryTupleReader(tempFile.toString(), tupleSize);
+    BinaryTupleReader reader = new BinaryTupleReader(tempFile.toString());
     for (Tuple tuple : tuples) {
       Tuple readTuple = reader.getNextTuple();
       assertEquals(tuple, readTuple);

@@ -2,7 +2,7 @@ package logicaloperator;
 
 import common.LogicalOperatorVisitor;
 
-public class LogicalDistinct extends LogicalOperator{
+public class LogicalDistinct extends LogicalOperator {
 
   private final LogicalOperator childOperator;
 

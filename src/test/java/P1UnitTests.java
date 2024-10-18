@@ -1,378 +1,103 @@
-import common.DBCatalog;
-import common.QueryPlanBuilder;
-import common.Tuple;
+import common.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
 import jdk.jshell.spi.ExecutionControl;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import physicaloperator.Operator;
 
 public class P1UnitTests {
+  private static final Logger logger = LogManager.getLogger(P1UnitTests.class);
+
+  private static Path expectedOutputPath;
+  private static Path outputPath;
   private static List<Statement> statementList;
   private static QueryPlanBuilder queryPlanBuilder;
-  private static Statements statements;
 
   @BeforeAll
   static void setupBeforeAllTests() throws IOException, JSQLParserException, URISyntaxException {
     ClassLoader classLoader = P1UnitTests.class.getClassLoader();
-    URI path = Objects.requireNonNull(classLoader.getResource("samples/input")).toURI();
-    Path resourcePath = Paths.get(path);
+    URI uri = Objects.requireNonNull(classLoader.getResource("samples")).toURI();
+    Path path = Paths.get(uri);
+    Path inputPath = path.resolve("input");
+    expectedOutputPath = path.resolve("expected_output");
+    outputPath = path.resolve("output_human_readable");
 
-    DBCatalog.getInstance().setDataDirectory(resourcePath.resolve("db").toString());
+    // Load DB schema, this read the schema.txt file
+    DBCatalog.getInstance().setDataDirectory(inputPath.resolve("db").toString());
 
     // Generate binary input files
-    HelperMethods.generateBinaryInputFile(resourcePath.resolve("db").toString());
+    HelperMethods.generateBinaryInputFile(inputPath.resolve("db"));
 
-    URI queriesFile =
-        Objects.requireNonNull(classLoader.getResource("samples/input/queries.sql")).toURI();
-
-    statements = CCJSqlParserUtil.parseStatements(Files.readString(Paths.get(queriesFile)));
-    queryPlanBuilder = new QueryPlanBuilder();
+    // Load queries
+    Path queriesFilePath = inputPath.resolve("queries.sql");
+    Statements statements = CCJSqlParserUtil.parseStatements(Files.readString(queriesFilePath));
     statementList = statements.getStatements();
+
+    // Initialize query plan builder
+    queryPlanBuilder = new QueryPlanBuilder();
   }
 
   @Test
-  public void testQuery1() throws ExecutionControl.NotImplementedException {
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(0));
+  public void runAllQueries() throws ExecutionControl.NotImplementedException {
+    for (int i = 0; i < statementList.size(); i++) {
+      runTestByIndex(i);
+    }
+  }
 
+  @ParameterizedTest
+  @MethodSource("queryIndices")
+  public void runTestByIndex(int index) throws ExecutionControl.NotImplementedException {
+
+    Statement statement = statementList.get(index);
+    logger.info("Running query: " + statement);
+
+    // build the query plan
+    Operator plan = queryPlanBuilder.buildPlan(statement);
+    logger.info("Query plan: " + plan);
+
+    // run the query
     List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
+    logger.info("Number of rows: " + tuples.size());
 
-    int expectedSize = 6;
+    // write the output to a human readable file
+    HelperMethods.writeOutput(outputPath, index, tuples);
 
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
+    // get the expected results
+    List<Tuple> expectedTuples = HelperMethods.getExpectedTuples(expectedOutputPath, index);
 
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(List.of(1, 200, 50))),
-          new Tuple(new ArrayList<>(List.of(2, 200, 200))),
-          new Tuple(new ArrayList<>(List.of(3, 100, 105))),
-          new Tuple(new ArrayList<>(List.of(4, 100, 50))),
-          new Tuple(new ArrayList<>(List.of(5, 100, 500))),
-          new Tuple(new ArrayList<>(List.of(6, 300, 400)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
+    // compare the results
+    Assertions.assertEquals(expectedTuples.size(), tuples.size(), "Unexpected number of rows.");
+    for (int i = 0; i < expectedTuples.size(); i++) {
+      Tuple expectedTuple = expectedTuples.get(i);
       Tuple actualTuple = tuples.get(i);
       Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
     }
   }
 
-  @Test
-  public void testQuery2() throws ExecutionControl.NotImplementedException {
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(1));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 6;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(List.of(1))),
-          new Tuple(new ArrayList<>(List.of(2))),
-          new Tuple(new ArrayList<>(List.of(3))),
-          new Tuple(new ArrayList<>(List.of(4))),
-          new Tuple(new ArrayList<>(List.of(5))),
-          new Tuple(new ArrayList<>(List.of(6)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
+  static IntStream queryIndices() {
+    return IntStream.range(0, statementList.size());
   }
 
   @Test
-  public void testQuery3() throws ExecutionControl.NotImplementedException {
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(2));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 6;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(List.of(1))),
-          new Tuple(new ArrayList<>(List.of(2))),
-          new Tuple(new ArrayList<>(List.of(3))),
-          new Tuple(new ArrayList<>(List.of(4))),
-          new Tuple(new ArrayList<>(List.of(5))),
-          new Tuple(new ArrayList<>(List.of(6)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
-  @Test
-  public void testQuery4() throws ExecutionControl.NotImplementedException {
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(3));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 2;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 50))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 200)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
-  @Test
-  public void testQuery5() throws ExecutionControl.NotImplementedException {
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(4));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 6;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 50, 1, 101))),
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 50, 1, 102))),
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 50, 1, 103))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 200, 2, 101))),
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 105, 3, 102))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 50, 4, 104)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
-  @Test
-  public void testQuery6() throws ExecutionControl.NotImplementedException {
-    Operator plan =
-        queryPlanBuilder.buildPlan(
-            statementList.get(5)); // Assuming statementList index 5 corresponds to query 6
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 15; // Total number of combinations given the values
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(List.of(1, 200, 50, 2, 200, 200))),
-          new Tuple(new ArrayList<>(List.of(1, 200, 50, 3, 100, 105))),
-          new Tuple(new ArrayList<>(List.of(1, 200, 50, 4, 100, 50))),
-          new Tuple(new ArrayList<>(List.of(1, 200, 50, 5, 100, 500))),
-          new Tuple(new ArrayList<>(List.of(1, 200, 50, 6, 300, 400))),
-          new Tuple(new ArrayList<>(List.of(2, 200, 200, 3, 100, 105))),
-          new Tuple(new ArrayList<>(List.of(2, 200, 200, 4, 100, 50))),
-          new Tuple(new ArrayList<>(List.of(2, 200, 200, 5, 100, 500))),
-          new Tuple(new ArrayList<>(List.of(2, 200, 200, 6, 300, 400))),
-          new Tuple(new ArrayList<>(List.of(3, 100, 105, 4, 100, 50))),
-          new Tuple(new ArrayList<>(List.of(3, 100, 105, 5, 100, 500))),
-          new Tuple(new ArrayList<>(List.of(3, 100, 105, 6, 300, 400))),
-          new Tuple(new ArrayList<>(List.of(4, 100, 50, 5, 100, 500))),
-          new Tuple(new ArrayList<>(List.of(4, 100, 50, 6, 300, 400))),
-          new Tuple(new ArrayList<>(List.of(5, 100, 500, 6, 300, 400)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuples[i], actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
-  @Test
-  public void testQuery7() throws ExecutionControl.NotImplementedException {
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(6));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 4;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(Arrays.asList(1))),
-          new Tuple(new ArrayList<>(Arrays.asList(2))),
-          new Tuple(new ArrayList<>(Arrays.asList(3))),
-          new Tuple(new ArrayList<>(Arrays.asList(4)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
-  @Test
-  public void testQuery8() throws ExecutionControl.NotImplementedException {
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(7));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 6;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 105))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 50))),
-          new Tuple(new ArrayList<>(Arrays.asList(5, 100, 500))),
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 50))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 200))),
-          new Tuple(new ArrayList<>(Arrays.asList(6, 300, 400)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
-  @Test
-  public void testQuery9() throws ExecutionControl.NotImplementedException {
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(8));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 36;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          // S.B = 100, R.G = 1
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(5, 100, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(5, 100, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(5, 100, 1))),
-          // S.B = 100, R.G = 2
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 2))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 2))),
-          new Tuple(new ArrayList<>(Arrays.asList(5, 100, 2))),
-          // S.B = 100, R.G = 3
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 3))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 3))),
-          new Tuple(new ArrayList<>(Arrays.asList(5, 100, 3))),
-          // S.B = 100, R.G = 4
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 4))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 4))),
-          new Tuple(new ArrayList<>(Arrays.asList(5, 100, 4))),
-          // S.B = 200, R.G = 1
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 1))),
-          // S.B = 200, R.G = 2
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 2))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 2))),
-          // S.B = 200, R.G = 3
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 3))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 3))),
-          // S.B = 200, R.G = 4
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 4))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 4))),
-          // S.B = 300, R.G = 1
-          new Tuple(new ArrayList<>(Arrays.asList(6, 300, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(6, 300, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(6, 300, 1))),
-          // S.B = 300, R.G = 2
-          new Tuple(new ArrayList<>(Arrays.asList(6, 300, 2))),
-          // S.B = 300, R.G = 3
-          new Tuple(new ArrayList<>(Arrays.asList(6, 300, 3))),
-          // S.B = 300, R.G = 4
-          new Tuple(new ArrayList<>(Arrays.asList(6, 300, 4)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
-  @Test
-  public void testQuery10() throws ExecutionControl.NotImplementedException {
-    // Assuming the query is at index 16 in the statementList
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(9));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    int expectedSize = 6;
-
-    Assertions.assertEquals(expectedSize, tuples.size(), "Unexpected number of rows.");
-
-    Tuple[] expectedTuples =
-        new Tuple[] {
-          new Tuple(new ArrayList<>(Arrays.asList(3, 100, 3))),
-          new Tuple(new ArrayList<>(Arrays.asList(4, 100, 4))),
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(1, 200, 1))),
-          new Tuple(new ArrayList<>(Arrays.asList(2, 200, 2)))
-        };
-
-    for (int i = 0; i < expectedSize; i++) {
-      Tuple expectedTuple = expectedTuples[i];
-      Tuple actualTuple = tuples.get(i);
-      Assertions.assertEquals(expectedTuple, actualTuple, "Unexpected tuple at index " + i);
-    }
-  }
-
-  @Test
-  public void testQuery11() throws ExecutionControl.NotImplementedException {
-    // Assuming the query with always false condition is at index 11 in the statementList
-    Operator plan = queryPlanBuilder.buildPlan(statementList.get(10));
-
-    List<Tuple> tuples = HelperMethods.collectAllTuples(plan);
-
-    // Since the condition 1 = 2 is always false, the expected size is 0
-    int expectedSize = 0;
-
-    Assertions.assertEquals(
-        expectedSize, tuples.size(), "Expected no rows due to always false condition.");
+  public void runSingleTest() throws ExecutionControl.NotImplementedException {
+    int index = 16; // specify the index of the test case you want to run
+    runTestByIndex(index);
   }
 }

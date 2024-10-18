@@ -82,4 +82,8 @@ public class DBCatalog {
   public ArrayList<Column> getSchemaForTable(String tableName) {
     return tables.get(tableName);
   }
+
+  public ArrayList<String> getTables() {
+    return new ArrayList<String>(tables.keySet());
+  }
 }

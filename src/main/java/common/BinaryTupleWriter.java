@@ -4,11 +4,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BinaryTupleWriter implements TupleWriter {
+public class BinaryTupleWriter extends TupleWriter {
   private final int PAGE_SIZE;
   private final int INT_SIZE = 4;
   private final int TUPLE_SIZE;
@@ -16,21 +19,28 @@ public class BinaryTupleWriter implements TupleWriter {
 
   private final Logger logger = LogManager.getLogger();
 
-  private final FileChannel fileChannel;
+  private FileChannel fileChannel = null;
   private final ByteBuffer buffer;
   private int bufferIndex;
   private int tupleCount;
 
-  public BinaryTupleWriter(String filePath, int tupleSize) throws IOException {
+  public BinaryTupleWriter(String filePath, int tupleSize) {
     this(filePath, tupleSize, 4096);
   }
 
-  public BinaryTupleWriter(String filePath, int tupleSize, int pageSize) throws IOException {
+  public BinaryTupleWriter(String filePath, int tupleSize, int pageSize) {
     this.TUPLE_SIZE = tupleSize;
     this.PAGE_SIZE = pageSize;
     this.MAX_TUPLE_COUNT_PER_PAGE = (PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
 
-    this.fileChannel = new FileOutputStream(filePath).getChannel();
+    try {
+      Path path = Paths.get(filePath);
+      Files.createDirectories(path.getParent());
+      this.fileChannel = new FileOutputStream(filePath).getChannel();
+    } catch (IOException e) {
+      logger.error("Error creating BinaryTupleWriter: ", e);
+    }
+
     this.buffer = ByteBuffer.allocate(this.PAGE_SIZE);
 
     // start with an index
@@ -92,10 +102,5 @@ public class BinaryTupleWriter implements TupleWriter {
     } catch (IOException e) {
       logger.error("Error closing BinaryTupleWriter: ", e);
     }
-  }
-
-  @Override
-  public int getTupleSize() {
-    return this.TUPLE_SIZE;
   }
 }

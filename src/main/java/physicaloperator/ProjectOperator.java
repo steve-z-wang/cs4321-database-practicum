@@ -7,13 +7,13 @@ import net.sf.jsqlparser.schema.Column;
 
 public class ProjectOperator extends Operator {
 
-  private final Operator inputOperator;
+  private final Operator childOperator;
   private final ArrayList<Integer> outputIndexToInputIndexMap = new ArrayList<>();
 
   public ProjectOperator(Operator operator, ArrayList<Column> outputSchema) {
     super(null);
 
-    this.inputOperator = operator;
+    this.childOperator = operator;
     ArrayList<Column> inputSchema = operator.getOutputSchema();
 
     // Set output schema
@@ -36,14 +36,14 @@ public class ProjectOperator extends Operator {
 
   @Override
   public void reset() {
-    this.inputOperator.reset();
+    this.childOperator.reset();
   }
 
   @Override
   public Tuple getNextTuple() {
 
     // get input
-    Tuple inputTuple = inputOperator.getNextTuple();
+    Tuple inputTuple = childOperator.getNextTuple();
 
     if (inputTuple == null) {
       return null;

@@ -1,9 +1,15 @@
 package common;
 
-public interface TupleWriter {
-  void writeTuple(Tuple tuple);
+import java.util.List;
 
-  void close();
+public abstract class TupleWriter {
+  public abstract void writeTuple(Tuple tuple);
 
-  int getTupleSize();
+  public abstract void close();
+
+  public void writeTuples(List<Tuple> tuples) {
+    for (Tuple t : tuples) {
+      writeTuple(t);
+    }
+  }
 }

@@ -3,43 +3,56 @@ package common;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class HumanReadableTupleReader implements TupleReader {
+public class HumanReadableTupleReader extends TupleReader {
 
-  private final int TUPLE_SIZE;
+  private static final Logger logger = LogManager.getLogger();
 
-  private String filePath;
+  private final String filePath;
   private BufferedReader reader;
 
-  public HumanReadableTupleReader(String filePath, int tupleSize) throws IOException {
-    this.TUPLE_SIZE = tupleSize;
-
+  public HumanReadableTupleReader(String filePath) {
     this.filePath = filePath;
-    this.reader = new BufferedReader(new FileReader(filePath));
+
+    try {
+      this.reader = new BufferedReader(new FileReader(filePath));
+    } catch (IOException e) {
+      logger.error("Error creating HumanReadableTupleReader: ", e);
+    }
   }
 
   @Override
-  public Tuple getNextTuple() throws IOException {
-    String nextLine = this.reader.readLine();
-    if (nextLine == null) {
+  public Tuple getNextTuple() {
+    try {
+      String nextLine = this.reader.readLine();
+      if (nextLine == null) {
+        return null;
+      }
+      return new Tuple(nextLine);
+    } catch (IOException e) {
+      logger.error("Error reading next tuple: ", e);
       return null;
     }
-    return new Tuple(nextLine);
   }
 
   @Override
-  public void close() throws IOException {
-    this.reader.close();
+  public void close() {
+    try {
+      this.reader.close();
+    } catch (IOException e) {
+      logger.error("Error closing HumanReadableTupleReader: ", e);
+    }
   }
 
   @Override
-  public void reset() throws IOException {
-    this.reader.close();
-    reader = new BufferedReader(new FileReader(this.filePath));
-  }
-
-  @Override
-  public int getTupleSize() {
-    return TUPLE_SIZE;
+  public void reset() {
+    try {
+      this.reader.close();
+      reader = new BufferedReader(new FileReader(this.filePath));
+    } catch (IOException e) {
+      logger.error("Error resetting HumanReadableTupleReader: ", e);
+    }
   }
 }

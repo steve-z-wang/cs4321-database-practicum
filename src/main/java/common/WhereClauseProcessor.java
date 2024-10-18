@@ -149,7 +149,7 @@ class WhereClauseProcessor extends ExpressionVisitorAdapter<Object> {
 
   private void handleJoinCondition(
       Expression comparison, String leftTableKey, String rightTableKey) {
-    if (tableOrder.get(leftTableKey) < tableOrder.get(rightTableKey)) {
+    if (tableOrder.get(leftTableKey) > tableOrder.get(rightTableKey)) {
       joinConditions.merge(
           leftTableKey, comparison, (existing, newExpr) -> new AndExpression(existing, newExpr));
     } else {

@@ -1,13 +1,21 @@
 package common;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public interface TupleReader {
-  Tuple getNextTuple() throws IOException;
+public abstract class TupleReader {
+  public abstract Tuple getNextTuple();
 
-  void close() throws IOException;
+  public abstract void close();
 
-  void reset() throws IOException;
+  public abstract void reset();
 
-  int getTupleSize();
+  public List<Tuple> getAllTuples() {
+    Tuple t;
+    List<Tuple> tuples = new ArrayList<>();
+    while ((t = getNextTuple()) != null) {
+      tuples.add(t);
+    }
+    return tuples;
+  }
 }

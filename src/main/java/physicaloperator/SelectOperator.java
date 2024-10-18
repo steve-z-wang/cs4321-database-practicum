@@ -7,7 +7,7 @@ import net.sf.jsqlparser.expression.Expression;
 /** able to perform SELECT * FROM Boats WHERE Boats.id = 4 */
 public class SelectOperator extends Operator {
 
-  private final Operator inputOperator;
+  private final Operator childOperator;
   private final Expression expression;
   private final ExpressionContext expressionContext;
   private final BooleanEvaluator evaluator = new BooleanEvaluator();
@@ -18,7 +18,7 @@ public class SelectOperator extends Operator {
     assert operator != null : "Operator cannot be null";
     assert expression != null : "Expression cannot be null";
 
-    this.inputOperator = operator;
+    this.childOperator = operator;
     this.expression = expression;
 
     // Set output schema same as input schema
@@ -30,7 +30,7 @@ public class SelectOperator extends Operator {
 
   @Override
   public void reset() {
-    inputOperator.reset();
+    childOperator.reset();
   }
 
   @Override
@@ -40,7 +40,7 @@ public class SelectOperator extends Operator {
     Tuple tuple;
 
     // Loop until we find a valid tuple or run out of tuples
-    while ((tuple = inputOperator.getNextTuple()) != null) {
+    while ((tuple = childOperator.getNextTuple()) != null) {
 
       // Update context
       expressionContext.setContext(tuple.getAllElements());

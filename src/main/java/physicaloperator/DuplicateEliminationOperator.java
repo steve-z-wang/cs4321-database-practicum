@@ -4,19 +4,19 @@ import common.Tuple;
 
 public class DuplicateEliminationOperator extends Operator {
 
-  private final Operator inputOperator;
+  private final Operator childOperator;
   private Tuple nextTuple;
 
   public DuplicateEliminationOperator(Operator operator) {
     super(operator.getOutputSchema());
-    this.inputOperator = operator;
-    this.nextTuple = this.inputOperator.getNextTuple();
+    this.childOperator = operator;
+    this.nextTuple = this.childOperator.getNextTuple();
   }
 
   @Override
   public void reset() {
-    this.inputOperator.reset();
-    this.nextTuple = this.inputOperator.getNextTuple();
+    this.childOperator.reset();
+    this.nextTuple = this.childOperator.getNextTuple();
   }
 
   @Override
@@ -24,10 +24,10 @@ public class DuplicateEliminationOperator extends Operator {
 
     Tuple toReturn = this.nextTuple;
 
-    this.nextTuple = this.inputOperator.getNextTuple();
+    this.nextTuple = this.childOperator.getNextTuple();
 
     while (nextTuple != null && nextTuple.equals(toReturn)) {
-      this.nextTuple = this.inputOperator.getNextTuple();
+      this.nextTuple = this.childOperator.getNextTuple();
     }
 
     return toReturn;

@@ -2,6 +2,7 @@ package common;
 
 import java.util.ArrayList;
 import java.util.List;
+import logicaloperator.*;
 import logicaloperator.LogicalOperator;
 import logicaloperator.LogicalScan;
 import net.sf.jsqlparser.expression.Expression;
@@ -9,18 +10,16 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.*;
-import logicaloperator.*;
-import physicaloperator.*;
 
 public class LogicalPlanBuilder {
 
   public LogicalPlanBuilder() {}
 
-  public LogicalOperator buildLogicalPlan(Statement stmt) {
+  public LogicalOperator buildPlan(Statement stmt) {
 
     PlainSelect plainSelect = (PlainSelect) (Select) stmt;
 
-    // Extract parts
+    // Extract
     List<SelectItem<?>> selectItems = plainSelect.getSelectItems();
     FromItem fromItem = plainSelect.getFromItem();
     List<Join> Joins = plainSelect.getJoins();
@@ -43,12 +42,10 @@ public class LogicalPlanBuilder {
       for (Join join : Joins) {
         Table joinTable = (Table) join.getRightItem();
         operator = new LogicalScan(joinTable);
-        operator = new LogicalJoin(previousOperator, operator,null);
+        operator = new LogicalJoin(previousOperator, operator, null);
         previousOperator = operator;
       }
-    }
-
-    else if (Joins != null && where != null) {
+    } else if (Joins != null && where != null) {
 
       // Process where clause
       WhereClauseProcessor whereClauseProcessor = new WhereClauseProcessor(fromItem, Joins);
@@ -61,8 +58,7 @@ public class LogicalPlanBuilder {
       }
 
       // Process joins and apply join conditions where appropriate
-      LogicalOperator previousOperator = operator;
-      Table previousTable = mainTable;
+      LogicalOperator leftOperator = operator;
       for (Join join : Joins) {
         Table joinTable = (Table) join.getRightItem();
 
@@ -76,10 +72,10 @@ public class LogicalPlanBuilder {
         }
 
         // Add join conditions to the join operator
-        Expression joinCondition = whereClauseProcessor.getJoinConditionsByTable(previousTable);
-        operator = new LogicalJoin(previousOperator, operator, joinCondition);
+        Expression joinCondition = whereClauseProcessor.getJoinConditionsByTable(joinTable);
+        operator = new LogicalJoin(leftOperator, operator, joinCondition);
 
-        previousOperator = operator;
+        leftOperator = operator;
       }
     }
 

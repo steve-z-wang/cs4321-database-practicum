@@ -1,8 +1,6 @@
 package compiler;
 
-import common.BinaryTupleWriter;
-import common.DBCatalog;
-import common.QueryPlanBuilder;
+import common.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,6 +39,7 @@ public class Compiler {
     try {
       String str = Files.readString(Paths.get(inputDir + "/queries.sql"));
       Statements statements = CCJSqlParserUtil.parseStatements(str);
+
       QueryPlanBuilder queryPlanBuilder = new QueryPlanBuilder();
 
       if (outputToFiles) {
@@ -57,13 +56,15 @@ public class Compiler {
 
           if (outputToFiles) {
             File outfile = new File(outputDir + "/query" + counter);
-            plan.dump(
-                new BinaryTupleWriter(outfile.getAbsolutePath(), plan.getOutputSchema().size()));
+            logger.info("Output file: " + outfile.getAbsolutePath());
+            TupleWriter tupleWriter =
+                new BinaryTupleWriter(outfile.getAbsolutePath(), plan.getOutputSchema().size());
+            plan.dump(tupleWriter);
           } else {
             plan.dump(System.out);
           }
         } catch (Exception e) {
-          logger.error(e.getMessage());
+          logger.error("Error processing query: " + statement, e);
         }
 
         ++counter;
