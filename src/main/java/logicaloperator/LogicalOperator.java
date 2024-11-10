@@ -1,7 +1,5 @@
 package logicaloperator;
 
-import common.LogicalOperatorVisitor;
-
 public abstract class LogicalOperator {
   public abstract String toString();
 

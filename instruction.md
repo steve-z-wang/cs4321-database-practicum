@@ -6,7 +6,7 @@ The top-level class for running the program is `Compiler`, located in the `src/m
 
 ## Join Condition Extraction Logic
 
-The logic for extracting join conditions from the `WHERE` clause is implemented in the `WhereClauseProcessor` class, which can be found in the `src/main/java/common/QueryPlanBuilder.java` file. Specifically, the `classifyExpression` method within `WhereClauseProcessor` is responsible for determining whether an expression is a join condition or a filter condition and processes them accordingly. The comments in the `WhereClauseProcessor` class detail how join conditions are separated from filter conditions and added to the query plan.
+The logic for extracting join conditions from the `WHERE` clause is implemented in the `WhereClauseProcessor` class, which can be found in the `src/main/java/io/QueryPlanBuilder.java` file. Specifically, the `classifyExpression` method within `WhereClauseProcessor` is responsible for determining whether an expression is a join condition or a filter condition and processes them accordingly. The comments in the `WhereClauseProcessor` class detail how join conditions are separated from filter conditions and added to the query plan.
 
 ## Known Bugs
 

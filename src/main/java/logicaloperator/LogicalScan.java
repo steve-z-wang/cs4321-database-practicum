@@ -1,6 +1,5 @@
 package logicaloperator;
 
-import common.LogicalOperatorVisitor;
 import net.sf.jsqlparser.schema.Table;
 
 public class LogicalScan extends LogicalOperator {

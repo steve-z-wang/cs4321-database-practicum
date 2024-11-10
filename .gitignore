@@ -9,3 +9,6 @@ logs/
 # Ignore IDE-specific files
 .vscode/
 .idea/
+
+# Apple System Files
+**/.DS_Store

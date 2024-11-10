@@ -1,6 +1,5 @@
 package logicaloperator;
 
-import common.LogicalOperatorVisitor;
 import net.sf.jsqlparser.expression.Expression;
 
 public class LogicalSelect extends LogicalOperator {

@@ -1,6 +1,5 @@
 package logicaloperator;
 
-import common.LogicalOperatorVisitor;
 import java.util.List;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 

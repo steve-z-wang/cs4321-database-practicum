@@ -1,6 +1,5 @@
 package logicaloperator;
 
-import common.LogicalOperatorVisitor;
 import net.sf.jsqlparser.expression.Expression;
 
 public class LogicalJoin extends LogicalOperator {

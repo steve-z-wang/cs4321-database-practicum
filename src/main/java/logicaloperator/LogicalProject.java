@@ -1,6 +1,5 @@
 package logicaloperator;
 
-import common.LogicalOperatorVisitor;
 import java.util.ArrayList;
 import net.sf.jsqlparser.schema.Column;
 

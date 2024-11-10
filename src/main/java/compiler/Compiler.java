@@ -1,15 +1,19 @@
 package compiler;
 
-import common.*;
+import builder.QueryPlanBuilder;
+import config.DBCatalog;
+import config.PhysicalPlanConfig;
+import io.writer.BinaryTupleWriter;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.Operator;
+import physicaloperator.base.Operator;
 
 /**
  * Top level harness class; reads queries from an input file one at a time, processes them and sends
@@ -36,6 +40,8 @@ public class Compiler {
     inputDir = args[0];
     outputDir = args[1];
     DBCatalog.getInstance().setDataDirectory(inputDir + "/db");
+    PhysicalPlanConfig.getInstance().setConfigFile(inputDir + "/plan_builder_config.txt");
+
     try {
       String str = Files.readString(Paths.get(inputDir + "/queries.sql"));
       Statements statements = CCJSqlParserUtil.parseStatements(str);
@@ -55,11 +61,11 @@ public class Compiler {
           Operator plan = queryPlanBuilder.buildPlan(statement);
 
           if (outputToFiles) {
-            File outfile = new File(outputDir + "/query" + counter);
-            logger.info("Output file: " + outfile.getAbsolutePath());
-            TupleWriter tupleWriter =
-                new BinaryTupleWriter(outfile.getAbsolutePath(), plan.getOutputSchema().size());
-            plan.dump(tupleWriter);
+            Path outfile = Paths.get(outputDir).resolve("query" + counter);
+            logger.info("Output file: {}", outfile);
+            BinaryTupleWriter writer =
+                new BinaryTupleWriter(outfile.toString(), plan.getOutputSchema().size());
+            plan.dump(writer);
           } else {
             plan.dump(System.out);
           }
