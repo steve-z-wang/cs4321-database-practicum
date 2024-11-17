@@ -15,8 +15,8 @@ import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
  * <p>Supports AndExpression, EqualsTo, NotEqualsTo, GreaterThan, GreaterThanEquals, MinorThan and
  * MinorThanEquals.
  */
-public class BooleanEvaluator extends ExpressionVisitorAdapter<Boolean> {
-  private final NumericEvaluator numericEvaluator = new NumericEvaluator();
+public class BooleanExpressionEvaluator extends ExpressionVisitorAdapter<Boolean> {
+  private final NumericExpressionEvaluator numericExpressionEvaluator = new NumericExpressionEvaluator();
 
   @Override
   public <S> Boolean visit(AndExpression andExpression, S context) {
@@ -32,48 +32,48 @@ public class BooleanEvaluator extends ExpressionVisitorAdapter<Boolean> {
 
   @Override
   public <S> Boolean visit(EqualsTo equalsTo, S context) {
-    Integer leftValue = equalsTo.getLeftExpression().accept(numericEvaluator, context);
-    Integer rightValue = equalsTo.getRightExpression().accept(numericEvaluator, context);
+    Integer leftValue = equalsTo.getLeftExpression().accept(numericExpressionEvaluator, context);
+    Integer rightValue = equalsTo.getRightExpression().accept(numericExpressionEvaluator, context);
 
     return leftValue.equals(rightValue);
   }
 
   @Override
   public <S> Boolean visit(NotEqualsTo notEqualsTo, S context) {
-    Integer leftValue = notEqualsTo.getLeftExpression().accept(numericEvaluator, context);
-    Integer rightValue = notEqualsTo.getRightExpression().accept(numericEvaluator, context);
+    Integer leftValue = notEqualsTo.getLeftExpression().accept(numericExpressionEvaluator, context);
+    Integer rightValue = notEqualsTo.getRightExpression().accept(numericExpressionEvaluator, context);
 
     return !leftValue.equals(rightValue);
   }
 
   @Override
   public <S> Boolean visit(GreaterThan greaterThan, S context) {
-    Integer leftValue = greaterThan.getLeftExpression().accept(numericEvaluator, context);
-    Integer rightValue = greaterThan.getRightExpression().accept(numericEvaluator, context);
+    Integer leftValue = greaterThan.getLeftExpression().accept(numericExpressionEvaluator, context);
+    Integer rightValue = greaterThan.getRightExpression().accept(numericExpressionEvaluator, context);
 
     return leftValue > rightValue;
   }
 
   @Override
   public <S> Boolean visit(GreaterThanEquals greaterThanEquals, S context) {
-    Integer leftValue = greaterThanEquals.getLeftExpression().accept(numericEvaluator, context);
-    Integer rightValue = greaterThanEquals.getRightExpression().accept(numericEvaluator, context);
+    Integer leftValue = greaterThanEquals.getLeftExpression().accept(numericExpressionEvaluator, context);
+    Integer rightValue = greaterThanEquals.getRightExpression().accept(numericExpressionEvaluator, context);
 
     return leftValue >= rightValue;
   }
 
   @Override
   public <S> Boolean visit(MinorThan minorThan, S context) {
-    Integer leftValue = minorThan.getLeftExpression().accept(numericEvaluator, context);
-    Integer rightValue = minorThan.getRightExpression().accept(numericEvaluator, context);
+    Integer leftValue = minorThan.getLeftExpression().accept(numericExpressionEvaluator, context);
+    Integer rightValue = minorThan.getRightExpression().accept(numericExpressionEvaluator, context);
 
     return leftValue < rightValue;
   }
 
   @Override
   public <S> Boolean visit(MinorThanEquals minorThanEquals, S context) {
-    Integer leftValue = minorThanEquals.getLeftExpression().accept(numericEvaluator, context);
-    Integer rightValue = minorThanEquals.getRightExpression().accept(numericEvaluator, context);
+    Integer leftValue = minorThanEquals.getLeftExpression().accept(numericExpressionEvaluator, context);
+    Integer rightValue = minorThanEquals.getRightExpression().accept(numericExpressionEvaluator, context);
 
     return leftValue <= rightValue;
   }

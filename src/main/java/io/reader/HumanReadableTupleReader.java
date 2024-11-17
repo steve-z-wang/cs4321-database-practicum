@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 public class HumanReadableTupleReader extends TupleReader {
 
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = LogManager.getLogger(HumanReadableTupleReader.class);
 
   private final String filePath;
   private BufferedReader reader;

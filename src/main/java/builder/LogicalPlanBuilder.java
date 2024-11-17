@@ -48,11 +48,11 @@ public class LogicalPlanBuilder {
     } else if (Joins != null && where != null) {
 
       // Process where clause
-      WhereClauseProcessor whereClauseProcessor = new WhereClauseProcessor(fromItem, Joins);
-      where.accept(whereClauseProcessor, null);
+      QueryConditionExtractor queryConditionExtractor = new QueryConditionExtractor(fromItem, Joins);
+      where.accept(queryConditionExtractor, null);
 
       // Filter conditions for the main table
-      Expression filterCondition = whereClauseProcessor.getFilterConditionsByTable(mainTable);
+      Expression filterCondition = queryConditionExtractor.getFilterConditionsByTable(mainTable);
       if (filterCondition != null) {
         operator = new LogicalSelect(operator, filterCondition);
       }
@@ -66,13 +66,13 @@ public class LogicalPlanBuilder {
         operator = new LogicalScan(joinTable);
 
         // Apply filter conditions for each join table
-        filterCondition = whereClauseProcessor.getFilterConditionsByTable(joinTable);
+        filterCondition = queryConditionExtractor.getFilterConditionsByTable(joinTable);
         if (filterCondition != null) {
           operator = new LogicalSelect(operator, filterCondition);
         }
 
         // Add join conditions to the join operator
-        Expression joinCondition = whereClauseProcessor.getJoinConditionsByTable(joinTable);
+        Expression joinCondition = queryConditionExtractor.getJoinConditionsByTable(joinTable);
         operator = new LogicalJoin(leftOperator, operator, joinCondition);
 
         leftOperator = operator;

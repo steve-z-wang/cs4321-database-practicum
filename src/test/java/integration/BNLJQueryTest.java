@@ -3,7 +3,7 @@ package integration;
 import config.PhysicalPlanConfig;
 import config.PhysicalPlanConfig.JoinMethod;
 import config.PhysicalPlanConfig.SortMethod;
-import java.util.HashSet;
+
 import java.util.List;
 import java.util.stream.IntStream;
 import model.Tuple;
@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import static util.HelperMethods.compareTupleListsAnyOrder;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BNLJQueryTest extends QueryTestBase {
@@ -27,18 +29,8 @@ public class BNLJQueryTest extends QueryTestBase {
 
   @Override
   protected void verifyQueryResults(List<Tuple> expected, List<Tuple> actual) {
-    if (expected.size() != actual.size()) {
-      throw new AssertionError(
-          String.format(
-              "Query returned unexpected number of rows. Expected: %d, Actual: %d",
-              expected.size(), actual.size()));
-    }
-
-    HashSet<Tuple> expectedSet = new HashSet<>(expected);
-    HashSet<Tuple> actualSet = new HashSet<>(actual);
-
-    if (!expectedSet.equals(actualSet)) {
-      throw new AssertionError("Query returned different results (ignoring order)");
+    if (!compareTupleListsAnyOrder(expected, actual)) {
+        throw new AssertionError("Query results do not match");
     }
   }
 

@@ -3,7 +3,7 @@ package builder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import logicaloperator.*;
+
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.ExpressionVisitorAdapter;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -12,13 +12,13 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
-import physicaloperator.base.BooleanEvaluator;
+import physicaloperator.base.BooleanExpressionEvaluator;
 
 /**
  * Class to process the WHERE clause of the SQL statement and separate join conditions from filter
  * conditions. It uses the visitor pattern to traverse and classify each comparison expression.
  */
-public class WhereClauseProcessor extends ExpressionVisitorAdapter<Object> {
+public class QueryConditionExtractor extends ExpressionVisitorAdapter<Void> {
   private final Map<String, Integer> tableOrder = new HashMap<>();
   private final Map<String, Expression> joinConditions = new HashMap<>();
   private final Map<String, Expression> filterConditions = new HashMap<>();
@@ -30,7 +30,7 @@ public class WhereClauseProcessor extends ExpressionVisitorAdapter<Object> {
    * @param fromItem the main table in the FROM clause
    * @param joins the list of JOIN clauses in the query
    */
-  public WhereClauseProcessor(FromItem fromItem, List<Join> joins) {
+  public QueryConditionExtractor(FromItem fromItem, List<Join> joins) {
     initializeTable((Table) fromItem, 0); // Initialize the main table
 
     int index = 1;
@@ -70,44 +70,44 @@ public class WhereClauseProcessor extends ExpressionVisitorAdapter<Object> {
   }
 
   @Override
-  public <S> Object visit(AndExpression andExpression, S context) {
+  public <S> Void visit(AndExpression andExpression, S context) {
     andExpression.getLeftExpression().accept(this, context);
     andExpression.getRightExpression().accept(this, context);
     return null;
   }
 
   @Override
-  public <S> Object visit(EqualsTo equalsTo, S context) {
+  public <S> Void visit(EqualsTo equalsTo, S context) {
     classifyExpression(equalsTo);
     return null;
   }
 
   @Override
-  public <S> Object visit(NotEqualsTo notEqualsTo, S context) {
+  public <S> Void visit(NotEqualsTo notEqualsTo, S context) {
     classifyExpression(notEqualsTo);
     return null;
   }
 
   @Override
-  public <S> Object visit(GreaterThan greaterThan, S context) {
+  public <S> Void visit(GreaterThan greaterThan, S context) {
     classifyExpression(greaterThan);
     return null;
   }
 
   @Override
-  public <S> Object visit(GreaterThanEquals greaterThanEquals, S context) {
+  public <S> Void visit(GreaterThanEquals greaterThanEquals, S context) {
     classifyExpression(greaterThanEquals);
     return null;
   }
 
   @Override
-  public <S> Object visit(MinorThan minorThan, S context) {
+  public <S> Void visit(MinorThan minorThan, S context) {
     classifyExpression(minorThan);
     return null;
   }
 
   @Override
-  public <S> Object visit(MinorThanEquals minorThanEquals, S context) {
+  public <S> Void visit(MinorThanEquals minorThanEquals, S context) {
     classifyExpression(minorThanEquals);
     return null;
   }
@@ -140,8 +140,8 @@ public class WhereClauseProcessor extends ExpressionVisitorAdapter<Object> {
       handleFilterCondition(comparison, rightTableKey);
     } else {
       // if non is a Column, we can evaulate it now
-      BooleanEvaluator booleanEvaluator = new BooleanEvaluator();
-      Boolean isTrue = comparison.accept(booleanEvaluator, null);
+      BooleanExpressionEvaluator booleanExpressionEvaluator = new BooleanExpressionEvaluator();
+      Boolean isTrue = comparison.accept(booleanExpressionEvaluator, null);
       if (!isTrue) {
         this.alwaysFalseCondition = true;
       }

@@ -5,7 +5,7 @@ import logicaloperator.LogicalOperator;
 import net.sf.jsqlparser.statement.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 
 /**
  * Class to translate a JSQLParser statement into a relational algebra query plan. For now only
@@ -41,7 +41,7 @@ public class QueryPlanBuilder {
    * @return the root of the query plan
    * @precondition stmt is a Select having a body that is a PlainSelect
    */
-  public Operator buildPlan(Statement stmt) throws ExecutionControl.NotImplementedException {
+  public PhysicalOperator buildPlan(Statement stmt) throws ExecutionControl.NotImplementedException {
     LogicalOperator logicalPlan = logicalPlanBuilder.buildPlan(stmt);
     logger.debug("Logical plan: " + logicalPlan);
 

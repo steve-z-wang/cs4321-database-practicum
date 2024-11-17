@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import model.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,7 +16,18 @@ public class HumanReadableTupleWriter extends TupleWriter {
   private BufferedWriter writer = null;
   private final Logger logger = LogManager.getLogger();
 
-  public HumanReadableTupleWriter(String filePath, int tupleSize) {
+  // Primary constructor
+  private HumanReadableTupleWriter(BufferedWriter writer) {
+    this.writer = writer;
+  }
+
+  // For existing files
+  public HumanReadableTupleWriter(Path path) throws IOException {
+    this(Files.newBufferedWriter(path, StandardOpenOption.WRITE));
+  }
+
+  // For creating new files
+  public HumanReadableTupleWriter(String filePath) {
     try {
       Path path = Paths.get(filePath);
       Files.createDirectories(path.getParent());

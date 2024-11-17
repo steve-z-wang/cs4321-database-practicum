@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import jdk.jshell.spi.ExecutionControl;
@@ -22,7 +21,9 @@ import net.sf.jsqlparser.statement.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
+
+import static util.HelperMethods.*;
 
 public class QueryTestBase {
   private static final Logger logger = LogManager.getLogger(QueryTestBase.class);
@@ -71,7 +72,7 @@ public class QueryTestBase {
     Statement statement = statementList.get(index);
     logger.info("Running query: {}", statement);
 
-    Operator plan = queryPlanBuilder.buildPlan(statement);
+    PhysicalOperator plan = queryPlanBuilder.buildPlan(statement);
     List<Tuple> tuples = collectAllTuples(plan);
 
     // Write both binary and human readable outputs
@@ -84,7 +85,14 @@ public class QueryTestBase {
     // Verify results
     String expectedPath = baseDir + "/expected_output/query" + (index + 1);
     List<Tuple> expectedTuples = readHumanReadable(expectedPath);
+
     verifyQueryResults(expectedTuples, tuples);
+  }
+
+  protected void verifyQueryResults(List<Tuple> expected, List<Tuple> actual) {
+    if (!compareTupleListsExact(expected, actual)) {
+      throw new AssertionError("Query returned different results (ignoring order)");
+    }
   }
 
   protected static List<Tuple> readBinary(String filePath) throws IOException {
@@ -112,31 +120,10 @@ public class QueryTestBase {
 
   protected static void writeHumanReadable(String filePath, List<Tuple> tuples) throws IOException {
     if (!tuples.isEmpty()) {
-      HumanReadableTupleWriter writer =
-          new HumanReadableTupleWriter(filePath, tuples.getFirst().getAllElements().size());
+      HumanReadableTupleWriter writer = new HumanReadableTupleWriter(filePath);
       writer.writeTuples(tuples);
       writer.close();
     }
   }
 
-  protected List<Tuple> collectAllTuples(Operator operator) {
-    List<Tuple> tuples = new ArrayList<>();
-    Tuple tuple;
-    while ((tuple = operator.getNextTuple()) != null) {
-      tuples.add(tuple);
-    }
-    return tuples;
-  }
-
-  protected void verifyQueryResults(List<Tuple> expected, List<Tuple> actual) {
-    if (expected.size() != actual.size()) {
-      throw new AssertionError("Query returned unexpected number of rows");
-    }
-
-    for (int i = 0; i < expected.size(); i++) {
-      if (!expected.get(i).equals(actual.get(i))) {
-        throw new AssertionError(String.format("Row mismatch at index %d", i));
-      }
-    }
-  }
 }

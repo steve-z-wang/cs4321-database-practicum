@@ -1,5 +1,8 @@
 package io.reader;
 
+import static config.PhysicalPlanConfig.INT_SIZE;
+
+import config.PhysicalPlanConfig;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,9 +18,9 @@ import org.apache.logging.log4j.Logger;
  */
 public class BinaryTupleReader extends TupleReader {
 
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = LogManager.getLogger(BinaryTupleReader.class);
 
-  private final int INT_SIZE = 4;
+  private static final int DEFAULT_PAGE_SIZE = PhysicalPlanConfig.PAGE_SIZE;
   private int TUPLE_SIZE;
 
   private FileChannel fileChannel = null;
@@ -25,10 +28,22 @@ public class BinaryTupleReader extends TupleReader {
   private int remainingTuples;
   private int bufferIndex;
 
-  public BinaryTupleReader(String filePath) {
-    this(filePath, 4096);
+  public BinaryTupleReader(FileChannel fileChannel) {
+    this(fileChannel, DEFAULT_PAGE_SIZE);
   }
 
+  public BinaryTupleReader(FileChannel fileChannel, int BytesPerPage) {
+    this.fileChannel = fileChannel;
+    this.buffer = ByteBuffer.allocate(BytesPerPage);
+    readPage();
+  }
+
+  // for backward compatibility
+  public BinaryTupleReader(String filePath) {
+    this(filePath, DEFAULT_PAGE_SIZE);
+  }
+
+  // for backward compatibility
   public BinaryTupleReader(String filePath, int pageSize) {
     try {
       this.fileChannel = new FileInputStream(filePath).getChannel();
@@ -40,6 +55,10 @@ public class BinaryTupleReader extends TupleReader {
     readPage();
   }
 
+  /**
+   * Read a page from the file
+   * @return true if there is a page to read, false otherwise
+   */
   private boolean readPage() {
     buffer.clear();
 
@@ -69,6 +88,7 @@ public class BinaryTupleReader extends TupleReader {
       }
     }
 
+    // read the tuple data
     ArrayList<Integer> tupleData = new ArrayList<>();
     for (int i = 0; i < this.TUPLE_SIZE; i++) {
       tupleData.add(buffer.getInt(this.bufferIndex));
@@ -87,6 +107,32 @@ public class BinaryTupleReader extends TupleReader {
       logger.error("Error resetting BinaryTupleReader: ", e);
     }
     readPage();
+  }
+
+  @Override
+  public void reset(int index) {
+
+    // calculate the page number and the offset within the page
+    int pageSize = this.buffer.capacity();
+    int tuplesPerPage = (pageSize - 2 * INT_SIZE) / (INT_SIZE * this.TUPLE_SIZE);
+    int pageNumber = index / tuplesPerPage;
+    int offset = index % tuplesPerPage;
+
+    // suppose index is 4 and tuplesPerPage is 2
+    // pageNumber = 4 / 2 = 2,
+    // offset = 4 % 2 = 0
+
+    try {
+      this.fileChannel.position((long) pageNumber * pageSize);
+    } catch (IOException e) {
+      logger.error("Error resetting BinaryTupleReader: ", e);
+    }
+
+    readPage();
+
+    // skip the tuples before the desired tuple
+    this.remainingTuples -= offset;
+    this.bufferIndex += offset * INT_SIZE * this.TUPLE_SIZE;
   }
 
   @Override

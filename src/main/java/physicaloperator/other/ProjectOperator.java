@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import model.Tuple;
 import net.sf.jsqlparser.schema.Column;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 
-public class ProjectOperator extends Operator {
+public class ProjectOperator extends PhysicalOperator {
 
-  private final Operator childOperator;
+  private final PhysicalOperator childOperator;
   private final ArrayList<Integer> outputIndexToInputIndexMap = new ArrayList<>();
 
-  public ProjectOperator(Operator operator, ArrayList<Column> outputSchema) {
+  public ProjectOperator(PhysicalOperator operator, ArrayList<Column> outputSchema) {
     super(null);
 
     this.childOperator = operator;

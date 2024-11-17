@@ -1,4 +1,4 @@
-package unit.physicaloperator;
+package unit.physicaloperator.base;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -10,17 +10,17 @@ import net.sf.jsqlparser.schema.Column;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import physicaloperator.base.ExpressionContext;
-import physicaloperator.base.NumericEvaluator;
+import physicaloperator.base.NumericExpressionEvaluator;
 
-class NumericEvaluatorTest {
+class NumericExpressionEvaluatorTest {
 
-  private NumericEvaluator numericEvaluator;
+  private NumericExpressionEvaluator numericExpressionEvaluator;
   private ExpressionContext expressionContext;
 
   @BeforeEach
   public void setUp() {
     // Initialize the NumericEvaluator
-    numericEvaluator = new NumericEvaluator();
+    numericExpressionEvaluator = new NumericExpressionEvaluator();
 
     // Create a schema with column names
     ArrayList<Column> schema = new ArrayList<>();
@@ -41,7 +41,7 @@ class NumericEvaluatorTest {
     LongValue longValue = new LongValue(100);
 
     // Visit LongValue and verify the result
-    Integer result = numericEvaluator.visit(longValue, expressionContext);
+    Integer result = numericExpressionEvaluator.visit(longValue, expressionContext);
     assertEquals(100, result, "Expected LongValue to return its numeric value");
   }
 
@@ -51,17 +51,17 @@ class NumericEvaluatorTest {
     Column column = new Column("col1");
 
     // Visit Column and verify the result
-    Integer result = numericEvaluator.visit(column, expressionContext);
+    Integer result = numericExpressionEvaluator.visit(column, expressionContext);
     assertEquals(10, result, "Expected Column 'col1' to return value 10 from the tuple");
 
     // Test for another column "col3"
     column = new Column("col3");
-    result = numericEvaluator.visit(column, expressionContext);
+    result = numericExpressionEvaluator.visit(column, expressionContext);
     assertEquals(30, result, "Expected Column 'col3' to return value 30 from the tuple");
 
     // Test for a non-existing column (not in schema)
     column = new Column("col4");
-    result = numericEvaluator.visit(column, expressionContext);
+    result = numericExpressionEvaluator.visit(column, expressionContext);
     assertNull(result, "Expected null for non-existing column 'col4'");
   }
 }

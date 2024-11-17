@@ -36,7 +36,7 @@ public class TupleReaderWriterTest {
 
     // Write the tuples to a file
     HumanReadableTupleWriter writer =
-        new HumanReadableTupleWriter(tempFile.toAbsolutePath().toString(), tupleSize);
+        new HumanReadableTupleWriter(tempFile.toAbsolutePath().toString());
     writer.writeTuple(tuple1);
     writer.writeTuple(tuple2);
     writer.writeTuple(tuple3);

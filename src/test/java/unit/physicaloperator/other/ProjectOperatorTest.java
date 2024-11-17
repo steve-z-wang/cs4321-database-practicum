@@ -1,4 +1,4 @@
-package unit.physicaloperator;
+package unit.physicaloperator.other;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -16,18 +16,18 @@ import net.sf.jsqlparser.schema.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 import physicaloperator.other.ProjectOperator;
 
 class ProjectOperatorTest {
 
-  private Operator inputOperator;
+  private PhysicalOperator inputOperator;
   private ProjectOperator projectOperator;
 
   @BeforeEach
   void setUp() {
     // Mock the input operator (even though it's abstract)
-    inputOperator = Mockito.mock(Operator.class);
+    inputOperator = Mockito.mock(PhysicalOperator.class);
 
     // Set up the input schema (InputOperator's output schema)
     Table table = new Table("test_table");

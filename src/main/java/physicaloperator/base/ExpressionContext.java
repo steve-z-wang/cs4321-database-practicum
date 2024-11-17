@@ -20,17 +20,20 @@ public class ExpressionContext {
     }
   }
 
+  // we don't want to do deep copy and also have much going for the context
+  // as it will be called for each tuple (many times)
   public void setContext(ArrayList<Integer> context) {
     this.context = context;
   }
 
-  public Integer getValue(Column column) {
+  public Integer getColumnValue(Column column) {
     // If context is not set return null
     if (this.context == null) {
       return null;
     }
 
-    Integer index = columnNameToIndexMap.get(getColumnKey(column));
+    String key = getColumnKey(column);
+    Integer index = columnNameToIndexMap.get(key);
     if (index != null) {
       return this.context.get(index);
     }

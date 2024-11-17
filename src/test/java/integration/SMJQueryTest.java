@@ -1,0 +1,34 @@
+package integration;
+
+import config.PhysicalPlanConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.IntStream;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class SMJQueryTest extends QueryTestBase{
+    private static final Logger logger = LogManager.getLogger(SMJQueryTest.class);
+
+    @BeforeAll
+    void setupSMJConfig() {
+        PhysicalPlanConfig.getInstance().setJoinConfig(PhysicalPlanConfig.JoinMethod.SMJ, 0);
+        PhysicalPlanConfig.getInstance().setSortConfig(PhysicalPlanConfig.SortMethod.EXTERNAL, 3);
+        logger.info("Configured SMJ");
+    }
+
+    @ParameterizedTest(name = "BNLJ Query #{arguments}")
+    @MethodSource("queryIndices")
+    void runBNLJQuery(int queryIndex) throws Exception {
+        logger.info("Running BNLJ query {}", queryIndex);
+        runTestByIndex(queryIndex);
+    }
+
+    private static IntStream queryIndices() {
+        return IntStream.range(0, statementList.size());
+    }
+}

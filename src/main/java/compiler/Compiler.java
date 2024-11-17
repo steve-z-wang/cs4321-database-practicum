@@ -13,7 +13,7 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 
 /**
  * Top level harness class; reads queries from an input file one at a time, processes them and sends
@@ -58,14 +58,21 @@ public class Compiler {
         logger.info("Processing query: " + statement);
 
         try {
-          Operator plan = queryPlanBuilder.buildPlan(statement);
+          PhysicalOperator plan = queryPlanBuilder.buildPlan(statement);
 
           if (outputToFiles) {
             Path outfile = Paths.get(outputDir).resolve("query" + counter);
             logger.info("Output file: {}", outfile);
+
+            // Create the file if it doesn't exist
+            if (!Files.exists(outfile)) {
+              Files.createFile(outfile);
+            }
+
             BinaryTupleWriter writer =
                 new BinaryTupleWriter(outfile.toString(), plan.getOutputSchema().size());
             plan.dump(writer);
+
           } else {
             plan.dump(System.out);
           }

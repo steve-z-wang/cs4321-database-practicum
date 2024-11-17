@@ -5,6 +5,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import model.Tuple;
 import net.sf.jsqlparser.schema.Column;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Abstract class to represent relational operators. Every operator has a reference to an
@@ -12,11 +14,13 @@ import net.sf.jsqlparser.schema.Column;
  * of Column objects. Each Column has an embedded Table object with the name and alias (if required)
  * fields set appropriately.
  */
-public abstract class Operator {
+public abstract class PhysicalOperator {
+
+  Logger logger = LogManager.getLogger(PhysicalOperator.class);
 
   protected ArrayList<Column> outputSchema;
 
-  public Operator(ArrayList<Column> outputSchema) {
+  public PhysicalOperator(ArrayList<Column> outputSchema) {
     this.outputSchema = outputSchema;
   }
 
@@ -26,6 +30,11 @@ public abstract class Operator {
 
   /** Resets cursor on the operator to the beginning */
   public abstract void reset();
+
+  /** Used only by sort methods **/
+  public void reset(int index) {
+    logger.error("Reset with index not implemented for this operator");
+  }
 
   /**
    * Get next tuple from operator

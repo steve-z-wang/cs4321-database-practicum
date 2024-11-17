@@ -3,19 +3,19 @@ package physicaloperator.other;
 import java.util.ArrayList;
 import model.Tuple;
 import net.sf.jsqlparser.expression.Expression;
-import physicaloperator.base.BooleanEvaluator;
+import physicaloperator.base.BooleanExpressionEvaluator;
 import physicaloperator.base.ExpressionContext;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 
 /** able to perform SELECT * FROM Boats WHERE Boats.id = 4 */
-public class SelectOperator extends Operator {
+public class SelectOperator extends PhysicalOperator {
 
-  private final Operator childOperator;
+  private final PhysicalOperator childOperator;
   private final Expression expression;
   private final ExpressionContext expressionContext;
-  private final BooleanEvaluator evaluator = new BooleanEvaluator();
+  private final BooleanExpressionEvaluator evaluator = new BooleanExpressionEvaluator();
 
-  public SelectOperator(Operator operator, Expression expression) {
+  public SelectOperator(PhysicalOperator operator, Expression expression) {
     super(null);
 
     assert operator != null : "Operator cannot be null";

@@ -1,14 +1,14 @@
 package physicaloperator.other;
 
 import model.Tuple;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 
-public class DuplicateEliminationOperator extends Operator {
+public class DuplicateEliminationOperator extends PhysicalOperator {
 
-  private final Operator childOperator;
+  private final PhysicalOperator childOperator;
   private Tuple nextTuple;
 
-  public DuplicateEliminationOperator(Operator operator) {
+  public DuplicateEliminationOperator(PhysicalOperator operator) {
     super(operator.getOutputSchema());
     this.childOperator = operator;
     this.nextTuple = this.childOperator.getNextTuple();

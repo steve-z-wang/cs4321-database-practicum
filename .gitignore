@@ -12,3 +12,6 @@ logs/
 
 # Apple System Files
 **/.DS_Store
+
+# Ignore temp file
+temp/

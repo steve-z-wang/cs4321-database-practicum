@@ -9,7 +9,7 @@ import net.sf.jsqlparser.schema.Column;
  *
  * <p>Supports Column and LongValue
  */
-public class NumericEvaluator extends ExpressionVisitorAdapter<Integer> {
+public class NumericExpressionEvaluator extends ExpressionVisitorAdapter<Integer> {
 
   @Override
   public <S> Integer visit(LongValue longValue, S context) {
@@ -19,6 +19,6 @@ public class NumericEvaluator extends ExpressionVisitorAdapter<Integer> {
   @Override
   public <S> Integer visit(Column column, S context) {
     ExpressionContext expressionContext = (ExpressionContext) context;
-    return expressionContext.getValue(column);
+    return expressionContext.getColumnValue(column);
   }
 }

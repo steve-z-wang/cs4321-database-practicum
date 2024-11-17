@@ -32,10 +32,4 @@ public class BasicQueryTest extends QueryTestBase {
   private static IntStream queryIndices() {
     return IntStream.range(0, statementList.size());
   }
-
-  // @Test
-  // public void runSingleTest() throws ExecutionControl.NotImplementedException, IOException {
-  //   int index = 16; // specify the index of the test case you want to run
-  //   runTestByIndex(index);
-  // }
 }

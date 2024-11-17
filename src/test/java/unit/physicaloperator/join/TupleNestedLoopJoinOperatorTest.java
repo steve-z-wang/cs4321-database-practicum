@@ -1,4 +1,4 @@
-package unit.physicaloperator;
+package unit.physicaloperator.join;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,21 +18,21 @@ import net.sf.jsqlparser.schema.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 import physicaloperator.join.TupleNestedLoopJoinOperator;
 
 class TupleNestedLoopJoinOperatorTest {
 
-  private Operator leftOperator;
-  private Operator rightOperator;
+  private PhysicalOperator leftOperator;
+  private PhysicalOperator rightOperator;
   private Expression expression;
   private TupleNestedLoopJoinOperator tupleNestedLoopJoinOperator;
 
   @BeforeEach
   void setUp() {
     // Mock the left and right operators
-    leftOperator = Mockito.mock(Operator.class);
-    rightOperator = Mockito.mock(Operator.class);
+    leftOperator = Mockito.mock(PhysicalOperator.class);
+    rightOperator = Mockito.mock(PhysicalOperator.class);
     expression = Mockito.mock(Expression.class);
 
     // Set up the output schemas for left and right operators

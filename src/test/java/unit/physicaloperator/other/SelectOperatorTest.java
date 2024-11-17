@@ -1,4 +1,4 @@
-package unit.physicaloperator;
+package unit.physicaloperator.other;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -13,13 +13,13 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 import physicaloperator.other.SelectOperator;
 
 /** Test cases for the SelectOperator class. */
 class SelectOperatorTest {
 
-  private Operator inputOperator;
+  private PhysicalOperator inputOperator;
   private Expression expression;
   private SelectOperator selectOperator;
   private List<Column> schema;
@@ -27,7 +27,7 @@ class SelectOperatorTest {
   @BeforeEach
   void setUp() {
     // Mock the input operator
-    inputOperator = mock(Operator.class);
+    inputOperator = mock(PhysicalOperator.class);
 
     // Define the schema
     Table table = new Table("Employees");

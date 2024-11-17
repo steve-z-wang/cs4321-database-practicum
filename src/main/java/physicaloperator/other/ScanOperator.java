@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import model.Tuple;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 
 /** able to perform SELECT * FROM MyTable */
-public class ScanOperator extends Operator {
+public class ScanOperator extends PhysicalOperator {
 
   private static final DBCatalog dbCatalog = DBCatalog.getInstance();
 

@@ -1,5 +1,8 @@
 package io.writer;
 
+import static config.PhysicalPlanConfig.INT_SIZE;
+import static config.PhysicalPlanConfig.PAGE_SIZE;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,9 +16,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class BinaryTupleWriter extends TupleWriter {
-  private static final int DEFAULT_PAGE_SIZE = 4096;
-  private static final int INT_SIZE = 4;
-  private final int PAGE_SIZE;
   private final int TUPLE_SIZE;
   private final int MAX_TUPLE_COUNT_PER_PAGE; // the maximum of tuple that can be hold on a page
 
@@ -26,13 +26,20 @@ public class BinaryTupleWriter extends TupleWriter {
   private int bufferIndex;
   private int tupleCount;
 
-  public BinaryTupleWriter(String filePath, int tupleSize) {
-    this(filePath, tupleSize, DEFAULT_PAGE_SIZE);
+  // Primary constructor that handles all initialization
+  public BinaryTupleWriter(FileChannel fileChannel, int tupleSize) {
+    this.TUPLE_SIZE = tupleSize;
+    this.MAX_TUPLE_COUNT_PER_PAGE = (PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
+    this.fileChannel = fileChannel;
+    this.buffer = ByteBuffer.allocate(PAGE_SIZE);
+    this.bufferIndex = 2 * INT_SIZE;
+    this.tupleCount = 0;
   }
 
-  public BinaryTupleWriter(String filePath, int tupleSize, int pageSize) {
+  // For backward compatibility
+  // TODO: migrage all to use the fileChannel object creator
+  public BinaryTupleWriter(String filePath, int tupleSize) {
     this.TUPLE_SIZE = tupleSize;
-    this.PAGE_SIZE = pageSize;
     this.MAX_TUPLE_COUNT_PER_PAGE = (PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
 
     try {
@@ -43,7 +50,7 @@ public class BinaryTupleWriter extends TupleWriter {
       logger.error("Error creating BinaryTupleWriter: ", e);
     }
 
-    this.buffer = ByteBuffer.allocate(this.PAGE_SIZE);
+    this.buffer = ByteBuffer.allocate(PAGE_SIZE);
 
     // start with an index
     this.bufferIndex = 2 * INT_SIZE;
@@ -93,7 +100,6 @@ public class BinaryTupleWriter extends TupleWriter {
 
   @Override
   public void close() {
-
     // if we start writing a new page
     if (tupleCount > 0) {
       writePage();

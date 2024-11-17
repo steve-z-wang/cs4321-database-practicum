@@ -1,4 +1,4 @@
-package unit.physicaloperator;
+package unit.physicaloperator.base;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,18 +16,18 @@ import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import physicaloperator.base.BooleanEvaluator;
+import physicaloperator.base.BooleanExpressionEvaluator;
 import physicaloperator.base.ExpressionContext;
 
-class BooleanEvaluatorTest {
+class BooleanExpressionEvaluatorTest {
 
-  private BooleanEvaluator booleanEvaluator;
+  private BooleanExpressionEvaluator booleanExpressionEvaluator;
   private ExpressionContext expressionContext;
   private Tuple tuple;
 
   @BeforeEach
   public void setUp() {
-    booleanEvaluator = new BooleanEvaluator();
+    booleanExpressionEvaluator = new BooleanExpressionEvaluator();
 
     // Define a schema with three columns
     ArrayList<Column> schema = new ArrayList<>();
@@ -51,11 +51,11 @@ class BooleanEvaluatorTest {
     equalsTo.setLeftExpression(new LongValue(10));
     equalsTo.setRightExpression(new Column(null, "col1"));
 
-    Boolean result = booleanEvaluator.visit(equalsTo, expressionContext);
+    Boolean result = booleanExpressionEvaluator.visit(equalsTo, expressionContext);
     assertTrue(result, "Expected column col1 to be equal to 10");
 
     equalsTo.setRightExpression(new LongValue(5));
-    result = booleanEvaluator.visit(equalsTo, expressionContext);
+    result = booleanExpressionEvaluator.visit(equalsTo, expressionContext);
     assertFalse(result, "Expected column col1 to be unequal to 5");
   }
 
@@ -65,11 +65,11 @@ class BooleanEvaluatorTest {
     notEqualsTo.setLeftExpression(new Column(null, "col1"));
     notEqualsTo.setRightExpression(new LongValue(5));
 
-    Boolean result = booleanEvaluator.visit(notEqualsTo, expressionContext);
+    Boolean result = booleanExpressionEvaluator.visit(notEqualsTo, expressionContext);
     assertTrue(result, "Expected column col1 to be unequal to 5");
 
     notEqualsTo.setRightExpression(new LongValue(10));
-    result = booleanEvaluator.visit(notEqualsTo, expressionContext);
+    result = booleanExpressionEvaluator.visit(notEqualsTo, expressionContext);
     assertFalse(result, "Expected column col1 to be equal to 10");
   }
 
@@ -79,11 +79,11 @@ class BooleanEvaluatorTest {
     greaterThan.setLeftExpression(new Column(null, "col2"));
     greaterThan.setRightExpression(new LongValue(15));
 
-    Boolean result = booleanEvaluator.visit(greaterThan, expressionContext);
+    Boolean result = booleanExpressionEvaluator.visit(greaterThan, expressionContext);
     assertTrue(result, "Expected column col2 to be greater than 15");
 
     greaterThan.setRightExpression(new LongValue(25));
-    result = booleanEvaluator.visit(greaterThan, expressionContext);
+    result = booleanExpressionEvaluator.visit(greaterThan, expressionContext);
     assertFalse(result, "Expected column col2 to be less than 25");
   }
 
@@ -93,11 +93,11 @@ class BooleanEvaluatorTest {
     greaterThanEquals.setLeftExpression(new Column(null, "col2"));
     greaterThanEquals.setRightExpression(new LongValue(20));
 
-    Boolean result = booleanEvaluator.visit(greaterThanEquals, expressionContext);
+    Boolean result = booleanExpressionEvaluator.visit(greaterThanEquals, expressionContext);
     assertTrue(result, "Expected column col2 to be greater than or equal to 20");
 
     greaterThanEquals.setRightExpression(new LongValue(25));
-    result = booleanEvaluator.visit(greaterThanEquals, expressionContext);
+    result = booleanExpressionEvaluator.visit(greaterThanEquals, expressionContext);
     assertFalse(result, "Expected column col2 to be less than 25");
   }
 
@@ -107,11 +107,11 @@ class BooleanEvaluatorTest {
     minorThan.setLeftExpression(new Column(null, "col3"));
     minorThan.setRightExpression(new LongValue(35));
 
-    Boolean result = booleanEvaluator.visit(minorThan, expressionContext);
+    Boolean result = booleanExpressionEvaluator.visit(minorThan, expressionContext);
     assertTrue(result, "Expected column col3 to be less than 35");
 
     minorThan.setRightExpression(new LongValue(25));
-    result = booleanEvaluator.visit(minorThan, expressionContext);
+    result = booleanExpressionEvaluator.visit(minorThan, expressionContext);
     assertFalse(result, "Expected column col3 to be greater than 25");
   }
 
@@ -121,11 +121,11 @@ class BooleanEvaluatorTest {
     minorThanEquals.setLeftExpression(new Column(null, "col3"));
     minorThanEquals.setRightExpression(new LongValue(30));
 
-    Boolean result = booleanEvaluator.visit(minorThanEquals, expressionContext);
+    Boolean result = booleanExpressionEvaluator.visit(minorThanEquals, expressionContext);
     assertTrue(result, "Expected column col3 to be less than or equal to 30");
 
     minorThanEquals.setRightExpression(new LongValue(25));
-    result = booleanEvaluator.visit(minorThanEquals, expressionContext);
+    result = booleanExpressionEvaluator.visit(minorThanEquals, expressionContext);
     assertFalse(result, "Expected column col3 to be greater than 25");
   }
 
@@ -140,12 +140,12 @@ class BooleanEvaluatorTest {
     rightExpr.setRightExpression(new LongValue(20));
 
     AndExpression andExpression = new AndExpression(leftExpr, rightExpr);
-    Boolean result = booleanEvaluator.visit(andExpression, expressionContext);
+    Boolean result = booleanExpressionEvaluator.visit(andExpression, expressionContext);
     assertTrue(result, "Expected both conditions to be true");
 
     // Now test with one false condition
     rightExpr.setRightExpression(new LongValue(30));
-    result = booleanEvaluator.visit(andExpression, expressionContext);
+    result = booleanExpressionEvaluator.visit(andExpression, expressionContext);
     assertFalse(result, "Expected one condition to be false");
   }
 }

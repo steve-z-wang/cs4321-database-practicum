@@ -2,6 +2,7 @@ package unit.io;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import config.PhysicalPlanConfig;
 import io.writer.BinaryTupleWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,9 +11,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import model.Tuple;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-class BinaryTupleWriterTests {
+class BinaryTupleWriterTest {
+
+  @AfterEach
+  void resetPageSize() {
+    PhysicalPlanConfig.getInstance().setPageSize(4096); // Reset to default
+  }
 
   @Test
   void writeSingleTupleFromArrayList() throws IOException {
@@ -111,7 +118,11 @@ class BinaryTupleWriterTests {
   @Test
   void writeTuplesExceedingPageSize() throws IOException {
     Path tempFile = Files.createTempFile("test", ".bin");
-    BinaryTupleWriter writer = new BinaryTupleWriter(tempFile.toString(), 1, 16);
+
+    PhysicalPlanConfig physicalPlanConfig = PhysicalPlanConfig.getInstance();
+    physicalPlanConfig.setPageSize(16);
+
+    BinaryTupleWriter writer = new BinaryTupleWriter(tempFile.toString(), 1);
     for (int i = 0; i < 10; i++) {
       writer.writeTuple(new Tuple(new ArrayList<>(Arrays.asList(i))));
     }

@@ -4,26 +4,26 @@ import java.util.ArrayList;
 import java.util.function.Supplier;
 import model.Tuple;
 import net.sf.jsqlparser.expression.Expression;
-import physicaloperator.base.BooleanEvaluator;
+import physicaloperator.base.BooleanExpressionEvaluator;
 import physicaloperator.base.ExpressionContext;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 
-public class TupleNestedLoopJoinOperator extends Operator {
+public class TupleNestedLoopJoinOperator extends PhysicalOperator {
 
-  private final Operator leftOperator;
-  private final Operator rightOperator;
+  private final PhysicalOperator leftOperator;
+  private final PhysicalOperator rightOperator;
   private final Expression expression;
   private final Supplier<Tuple> selectedGetNextTuple;
   private final ExpressionContext expressionContext;
-  private final BooleanEvaluator evaluator;
+  private final BooleanExpressionEvaluator evaluator;
   private Tuple leftTuple;
 
-  public TupleNestedLoopJoinOperator(Operator leftOperator, Operator rightOperator) {
+  public TupleNestedLoopJoinOperator(PhysicalOperator leftOperator, PhysicalOperator rightOperator) {
     this(leftOperator, rightOperator, null);
   }
 
   public TupleNestedLoopJoinOperator(
-      Operator leftOperator, Operator rightOperator, Expression expression) {
+          PhysicalOperator leftOperator, PhysicalOperator rightOperator, Expression expression) {
     super(null);
 
     this.leftOperator = leftOperator;
@@ -42,7 +42,7 @@ public class TupleNestedLoopJoinOperator extends Operator {
     } else {
       this.selectedGetNextTuple = this::getNextTupleWithExpression;
       this.expressionContext = new ExpressionContext(this.outputSchema);
-      this.evaluator = new BooleanEvaluator();
+      this.evaluator = new BooleanExpressionEvaluator();
     }
 
     // Set first left tuple

@@ -1,22 +1,24 @@
 package physicaloperator.join;
 
+import static config.PhysicalPlanConfig.INT_SIZE;
+import static config.PhysicalPlanConfig.PAGE_SIZE;
+
+import config.PhysicalPlanConfig;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 import model.Tuple;
 import net.sf.jsqlparser.expression.Expression;
-import physicaloperator.base.BooleanEvaluator;
+import physicaloperator.base.BooleanExpressionEvaluator;
 import physicaloperator.base.ExpressionContext;
-import physicaloperator.base.Operator;
+import physicaloperator.base.PhysicalOperator;
 
-public class BlockNestedLoopJoinOperator extends Operator {
-  private static final int PAGE_SIZE = 4096;
-
-  private final Operator outerOperator;
-  private final Operator innerOperator;
+public class BlockNestedLoopJoinOperator extends PhysicalOperator {
+  private final PhysicalOperator outerOperator;
+  private final PhysicalOperator innerOperator;
   private final Expression condition;
   private final Supplier<Tuple> selectedGetNextTuple;
   private final ExpressionContext expressionContext;
-  private final BooleanEvaluator evaluator;
+  private final BooleanExpressionEvaluator evaluator;
 
   private Tuple[] outerBlockBuffer;
   private int tuplesPerBlock;
@@ -24,8 +26,18 @@ public class BlockNestedLoopJoinOperator extends Operator {
   private int currentBufferSize;
   private Tuple currentInnerTuple;
 
+  public BlockNestedLoopJoinOperator(PhysicalOperator outerOperator, PhysicalOperator innerOperator) {
+    this(outerOperator, innerOperator, null);
+  }
+
   public BlockNestedLoopJoinOperator(
-      Operator outerOperator, Operator innerOperator, Expression condition, int pagesPerBlock) {
+          PhysicalOperator outerOperator, PhysicalOperator innerOperator, Expression condition) {
+    this(outerOperator, innerOperator, condition, PhysicalPlanConfig.getInstance().getJoinBufferPages());
+  }
+
+  public BlockNestedLoopJoinOperator(
+          PhysicalOperator outerOperator, PhysicalOperator innerOperator, Expression condition, int JoinBufferPages) {
+
     super(null);
 
     this.outerOperator = outerOperator;
@@ -44,11 +56,11 @@ public class BlockNestedLoopJoinOperator extends Operator {
     } else {
       this.selectedGetNextTuple = this::getNextTupleWithCondition;
       this.expressionContext = new ExpressionContext(this.outputSchema);
-      this.evaluator = new BooleanEvaluator();
+      this.evaluator = new BooleanExpressionEvaluator();
     }
 
     // Initialize buffer
-    tuplesPerBlock = PAGE_SIZE / this.outputSchema.size() * pagesPerBlock;
+    tuplesPerBlock = JoinBufferPages * PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
     outerBlockBuffer = new Tuple[tuplesPerBlock];
 
     loadNextBlock();
