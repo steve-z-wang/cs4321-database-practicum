@@ -18,12 +18,13 @@ public class TupleNestedLoopJoinOperator extends PhysicalOperator {
   private final BooleanExpressionEvaluator evaluator;
   private Tuple leftTuple;
 
-  public TupleNestedLoopJoinOperator(PhysicalOperator leftOperator, PhysicalOperator rightOperator) {
+  public TupleNestedLoopJoinOperator(
+      PhysicalOperator leftOperator, PhysicalOperator rightOperator) {
     this(leftOperator, rightOperator, null);
   }
 
   public TupleNestedLoopJoinOperator(
-          PhysicalOperator leftOperator, PhysicalOperator rightOperator, Expression expression) {
+      PhysicalOperator leftOperator, PhysicalOperator rightOperator, Expression expression) {
     super(null);
 
     this.leftOperator = leftOperator;

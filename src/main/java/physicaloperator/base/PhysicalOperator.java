@@ -24,6 +24,12 @@ public abstract class PhysicalOperator {
     this.outputSchema = outputSchema;
   }
 
+  /**
+   * Get the output schema of the operator The output schema is a list of Columns, which always
+   * contains the table with the alias if exists
+   *
+   * @return output schema
+   */
   public ArrayList<Column> getOutputSchema() {
     return outputSchema;
   }
@@ -31,7 +37,7 @@ public abstract class PhysicalOperator {
   /** Resets cursor on the operator to the beginning */
   public abstract void reset();
 
-  /** Used only by sort methods **/
+  /** Used only by sort methods * */
   public void reset(int index) {
     logger.error("Reset with index not implemented for this operator");
   }

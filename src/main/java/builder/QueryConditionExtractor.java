@@ -3,7 +3,6 @@ package builder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.ExpressionVisitorAdapter;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;

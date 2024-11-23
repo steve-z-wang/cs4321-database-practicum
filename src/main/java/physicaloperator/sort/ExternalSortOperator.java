@@ -43,7 +43,8 @@ public class ExternalSortOperator extends PhysicalOperator {
 
     // the total memory that we can use at a time
     this.pagesPerBlock = config.getSortBufferPages();
-    this.initPassBufferSize = (this.pagesPerBlock-1) * PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
+    this.initPassBufferSize =
+        (this.pagesPerBlock - 1) * PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
 
     this.tupleComparator = new SortTupleComparator(orderByElements, this.outputSchema);
 
@@ -130,7 +131,7 @@ public class ExternalSortOperator extends PhysicalOperator {
   }
 
   private List<String> createMergeRuns(int passCount, List<String> runFiles) {
-    logger.debug("Creating runs for the {}-th merge pass",  passCount );
+    logger.debug("Creating runs for the {}-th merge pass", passCount);
 
     List<String> newRunFiles = new ArrayList<>();
     // we have B page, B-1 pages are for the readers
@@ -156,7 +157,7 @@ public class ExternalSortOperator extends PhysicalOperator {
       // delete the old run file
       logger.debug("Deleting previous run {}", filesToProcess);
       try {
-        for (String file: filesToProcess) {
+        for (String file : filesToProcess) {
           cacheFileManager.deleteFile(file);
         }
       } catch (IOException e) {
@@ -173,7 +174,7 @@ public class ExternalSortOperator extends PhysicalOperator {
   private void writeMergeRun(String runFileName, PriorityQueue<HeapNode> minHeap) {
     logger.debug("Creating run {}", runFileName);
     try (FileChannel channel = cacheFileManager.getWriteChannel(runFileName);
-         TupleWriter writer = new BinaryTupleWriter(channel, this.outputSchema.size())) {
+        TupleWriter writer = new BinaryTupleWriter(channel, this.outputSchema.size())) {
 
       // writing all tuple from readers to the file
       while (!minHeap.isEmpty()) {
@@ -195,10 +196,11 @@ public class ExternalSortOperator extends PhysicalOperator {
 
   private PriorityQueue<HeapNode> initialMergeHeap(List<String> filesToProcess) {
     logger.debug("Initialize heap for {}", filesToProcess);
-    PriorityQueue<HeapNode> minHeap = new PriorityQueue<>(
-                    (node1, node2) -> this.tupleComparator.compare(node1.tuple(), node2.tuple()));
+    PriorityQueue<HeapNode> minHeap =
+        new PriorityQueue<>(
+            (node1, node2) -> this.tupleComparator.compare(node1.tuple(), node2.tuple()));
     try {
-      for (String file: filesToProcess) {
+      for (String file : filesToProcess) {
         FileChannel channel = cacheFileManager.getReadChannel(file);
         TupleReader reader = new BinaryTupleReader(channel);
         Tuple firstTuple = reader.getNextTuple();
@@ -211,7 +213,6 @@ public class ExternalSortOperator extends PhysicalOperator {
     }
     return minHeap;
   }
-
 }
 
 /**

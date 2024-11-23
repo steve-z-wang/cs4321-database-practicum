@@ -41,10 +41,12 @@ public class QueryPlanBuilder {
    * @return the root of the query plan
    * @precondition stmt is a Select having a body that is a PlainSelect
    */
-  public PhysicalOperator buildPlan(Statement stmt) throws ExecutionControl.NotImplementedException {
+  public PhysicalOperator buildPlan(Statement stmt)
+      throws ExecutionControl.NotImplementedException {
     LogicalOperator logicalPlan = logicalPlanBuilder.buildPlan(stmt);
-    logger.debug("Logical plan: " + logicalPlan);
+    logger.debug("Created logical plan: {}", logicalPlan);
 
+    logger.info("Building physical plan for query: {}", stmt);
     logicalPlan.accept(physicalPlanBuilder);
     return physicalPlanBuilder.getPhysicalPlan();
   }

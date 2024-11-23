@@ -1,19 +1,16 @@
 package physicaloperator.join;
 
+import java.util.ArrayList;
 import model.Tuple;
-import net.sf.jsqlparser.expression.Expression;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import physicaloperator.base.PhysicalOperator;
-import java.util.ArrayList;
 
 /**
- * Implements Sort-Merge Join algorithm.
- * Algorithm logic:
- * 1. Advance through both relations until matching tuples are found
- * 2. When a match is found, mark the position in right relation
- * 3. Output all matching combinations
- * 4. When exhausted, reset right relation to mark and advance left relation
+ * Implements Sort-Merge Join algorithm. Algorithm logic: 1. Advance through both relations until
+ * matching tuples are found 2. When a match is found, mark the position in right relation 3. Output
+ * all matching combinations 4. When exhausted, reset right relation to mark and advance left
+ * relation
  */
 public class SortMergeJoinOperator extends PhysicalOperator {
   private static final Logger logger = LogManager.getLogger(SortMergeJoinOperator.class);
@@ -28,8 +25,10 @@ public class SortMergeJoinOperator extends PhysicalOperator {
   private int rightMark;
   private boolean isMarked;
 
-  public SortMergeJoinOperator(PhysicalOperator leftOperator, PhysicalOperator rightOperator,
-                               JoinTupleComparator comparator) {
+  public SortMergeJoinOperator(
+      PhysicalOperator leftOperator,
+      PhysicalOperator rightOperator,
+      JoinTupleComparator comparator) {
     super(null);
 
     logger.debug("Initializing SortMergeJoinOperator");

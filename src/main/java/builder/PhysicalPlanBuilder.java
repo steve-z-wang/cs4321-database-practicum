@@ -1,9 +1,9 @@
 package builder;
 
 import config.PhysicalPlanConfig;
+import java.util.List;
 import logicaloperator.*;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import physicaloperator.base.PhysicalOperator;
 import physicaloperator.join.BlockNestedLoopJoinOperator;
@@ -16,8 +16,6 @@ import physicaloperator.other.ScanOperator;
 import physicaloperator.other.SelectOperator;
 import physicaloperator.sort.ExternalSortOperator;
 import physicaloperator.sort.InMemorySortOperator;
-
-import java.util.List;
 
 public class PhysicalPlanBuilder implements LogicalOperatorVisitor {
 
@@ -33,7 +31,8 @@ public class PhysicalPlanBuilder implements LogicalOperatorVisitor {
     return physicalPlan;
   }
 
-  private PhysicalOperator getJoinOperator(PhysicalOperator leftChild, PhysicalOperator rightChild, Expression joinCondition) {
+  private PhysicalOperator getJoinOperator(
+      PhysicalOperator leftChild, PhysicalOperator rightChild, Expression joinCondition) {
     switch (config.getJoinMethod()) {
       case BNLJ:
         return new BlockNestedLoopJoinOperator(leftChild, rightChild, joinCondition);
@@ -41,25 +40,34 @@ public class PhysicalPlanBuilder implements LogicalOperatorVisitor {
 
         // if the join condition is null, fall back to BNLJ
         if (joinCondition == null) {
-          return new BlockNestedLoopJoinOperator(leftChild, rightChild, null, PhysicalPlanConfig.DEFAULT_BNLJ_BUFFER_PAGES);
+          return new BlockNestedLoopJoinOperator(
+              leftChild, rightChild, null, PhysicalPlanConfig.DEFAULT_BNLJ_BUFFER_PAGES);
         }
 
         // Extract the sort order for both left and right child
-        SMJConditionExtractor smjConditionExtractor = new SMJConditionExtractor(leftChild, rightChild);
+        SMJConditionExtractor smjConditionExtractor =
+            new SMJConditionExtractor(leftChild, rightChild);
         joinCondition.accept(smjConditionExtractor);
 
         // If the join condition is not valid for SMJ, fall back to BNLJ
         if (!smjConditionExtractor.isValidSortMergeJoin()) {
-          return new BlockNestedLoopJoinOperator(leftChild, rightChild, joinCondition, PhysicalPlanConfig.DEFAULT_BNLJ_BUFFER_PAGES);
+          return new BlockNestedLoopJoinOperator(
+              leftChild, rightChild, joinCondition, PhysicalPlanConfig.DEFAULT_BNLJ_BUFFER_PAGES);
         }
 
         // Create left and right sort operators
-        PhysicalOperator leftSort = getSortOperator(leftChild, smjConditionExtractor.getLeftChildSortOrder());
-        PhysicalOperator rightSort = getSortOperator(rightChild, smjConditionExtractor.getRightChildSortOrder());
+        PhysicalOperator leftSort =
+            getSortOperator(leftChild, smjConditionExtractor.getLeftChildSortOrder());
+        PhysicalOperator rightSort =
+            getSortOperator(rightChild, smjConditionExtractor.getRightChildSortOrder());
 
         // Create a join tuple comparator
-        JoinTupleComparator joinTupleComparator = new JoinTupleComparator(leftSort.getOutputSchema(), smjConditionExtractor.getLeftChildSortOrder(),
-            rightSort.getOutputSchema(), smjConditionExtractor.getRightChildSortOrder());
+        JoinTupleComparator joinTupleComparator =
+            new JoinTupleComparator(
+                leftSort.getOutputSchema(),
+                smjConditionExtractor.getLeftChildSortOrder(),
+                rightSort.getOutputSchema(),
+                smjConditionExtractor.getRightChildSortOrder());
 
         return new SortMergeJoinOperator(leftSort, rightSort, joinTupleComparator);
 
@@ -68,7 +76,8 @@ public class PhysicalPlanBuilder implements LogicalOperatorVisitor {
     }
   }
 
-  private PhysicalOperator getSortOperator(PhysicalOperator child, List<OrderByElement> OrderByElements) {
+  private PhysicalOperator getSortOperator(
+      PhysicalOperator child, List<OrderByElement> OrderByElements) {
     if (config.getSortMethod() == PhysicalPlanConfig.SortMethod.IN_MEMORY) {
       return new InMemorySortOperator(child, OrderByElements);
     } else {
@@ -88,7 +97,6 @@ public class PhysicalPlanBuilder implements LogicalOperatorVisitor {
     PhysicalOperator child = this.physicalPlan;
     this.physicalPlan = new SelectOperator(child, logicalSelect.getCondition());
   }
-
 
   @Override
   public void visit(LogicalJoin logicalJoin) {

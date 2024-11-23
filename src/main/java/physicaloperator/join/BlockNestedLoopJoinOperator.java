@@ -26,17 +26,25 @@ public class BlockNestedLoopJoinOperator extends PhysicalOperator {
   private int currentBufferSize;
   private Tuple currentInnerTuple;
 
-  public BlockNestedLoopJoinOperator(PhysicalOperator outerOperator, PhysicalOperator innerOperator) {
+  public BlockNestedLoopJoinOperator(
+      PhysicalOperator outerOperator, PhysicalOperator innerOperator) {
     this(outerOperator, innerOperator, null);
   }
 
   public BlockNestedLoopJoinOperator(
-          PhysicalOperator outerOperator, PhysicalOperator innerOperator, Expression condition) {
-    this(outerOperator, innerOperator, condition, PhysicalPlanConfig.getInstance().getJoinBufferPages());
+      PhysicalOperator outerOperator, PhysicalOperator innerOperator, Expression condition) {
+    this(
+        outerOperator,
+        innerOperator,
+        condition,
+        PhysicalPlanConfig.getInstance().getJoinBufferPages());
   }
 
   public BlockNestedLoopJoinOperator(
-          PhysicalOperator outerOperator, PhysicalOperator innerOperator, Expression condition, int JoinBufferPages) {
+      PhysicalOperator outerOperator,
+      PhysicalOperator innerOperator,
+      Expression condition,
+      int JoinBufferPages) {
 
     super(null);
 

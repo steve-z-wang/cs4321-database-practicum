@@ -57,6 +57,7 @@ public class BinaryTupleReader extends TupleReader {
 
   /**
    * Read a page from the file
+   *
    * @return true if there is a page to read, false otherwise
    */
   private boolean readPage() {

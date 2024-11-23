@@ -2,7 +2,6 @@ package physicaloperator.sort;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import model.Tuple;
 import net.sf.jsqlparser.schema.Column;
@@ -34,7 +33,6 @@ public class SortTupleComparator implements Comparator<Tuple> {
       }
     }
   }
-
 
   @Override
   public int compare(Tuple t1, Tuple t2) {
