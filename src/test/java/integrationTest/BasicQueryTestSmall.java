@@ -1,5 +1,6 @@
 package integrationTest;
 
+import static testUtil.HelperMethods.convertToBinaryFiles;
 import static testUtil.HelperMethods.readHumanReadable;
 
 import config.PhysicalPlanConfig;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import testUtil.QueryTestBase;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BasicQueryTestSmall extends QueryTestBase {
@@ -24,14 +26,16 @@ public class BasicQueryTestSmall extends QueryTestBase {
   @BeforeAll
   void setUpSmallEnvironment() throws JSQLParserException, IOException, URISyntaxException {
     logger.info("Setting up small database environment");
-    setupEnvironment("small");
-
+    setupEnvironment("integration_test_samples/small");
     configureJoinAndSortMethods();
+
+    // Generate binary input files
+    convertToBinaryFiles(baseDir + "/input/data_humanreadable", baseDir + "/input/data");
   }
 
   void configureJoinAndSortMethods() {
-    PhysicalPlanConfig.getInstance().setJoinConfig(PhysicalPlanConfig.JoinMethod.TNLJ, 0);
-    PhysicalPlanConfig.getInstance().setSortConfig(PhysicalPlanConfig.SortMethod.IN_MEMORY, 0);
+    physicalPlanConfig.setJoinConfig(PhysicalPlanConfig.JoinMethod.TNLJ, 0);
+    physicalPlanConfig.setSortConfig(PhysicalPlanConfig.SortMethod.IN_MEMORY, 0);
   }
 
   @ParameterizedTest(name = "Query #{arguments}")
@@ -46,7 +50,7 @@ public class BasicQueryTestSmall extends QueryTestBase {
   }
 
   @Override
-  List<Tuple> getExpectedResult(int index) throws IOException {
+  protected List<Tuple> getExpectedResult(int index) throws IOException {
     String expectedPath = baseDir + "/output_expected_humanreadable/query" + (index + 1);
     return readHumanReadable(expectedPath);
   }

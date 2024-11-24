@@ -38,7 +38,7 @@ public class PhysicalPlanConfig {
     joinBufferPages = 0;
     sortBufferPages = 0;
 
-    initDefaultCacheDirectory();
+    setCacheDirectory(DEFAULT_CACHE_DIR_NAME);
   }
 
   public static PhysicalPlanConfig getInstance() {
@@ -48,30 +48,13 @@ public class PhysicalPlanConfig {
     return instance;
   }
 
-  private void initDefaultCacheDirectory() {
-    try {
-      // Get the project root directory (where you run the program)
-      String projectRoot = System.getProperty("user.dir");
-
-      // Create path for cache directory within project
-      Path defaultCachePath = Paths.get(projectRoot, "build", DEFAULT_CACHE_DIR_NAME);
-
-      // Set the absolute path as cache directory
-      this.cacheDirectory = defaultCachePath.toAbsolutePath().toString();
-
-      logger.info("Set default cache directory to: {}", this.cacheDirectory);
-    } catch (Exception e) {
-      logger.error("Failed to set cache directory: {}", e.getMessage());
-      throw new RuntimeException("Failed to initialize cache directory", e);
-    }
-  }
-
   /**
    * Sets the configuration directory and reads the config file
    *
    * @param configFile path of config file
    */
   public void setConfigFile(String configFile) {
+    logger.info("Reading config file: {}", configFile);
     try {
       BufferedReader br = new BufferedReader(new FileReader(configFile));
       String config = br.readLine() + "\n" + br.readLine();
@@ -80,6 +63,7 @@ public class PhysicalPlanConfig {
     } catch (Exception e) {
       logger.error("Error reading config file: " + e.getMessage());
     }
+    logger.info("Join method: {}, Sort method: {}", joinMethod, sortMethod);
   }
 
   private void parseConfig(String config) {

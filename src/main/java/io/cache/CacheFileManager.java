@@ -14,23 +14,10 @@ import org.apache.logging.log4j.Logger;
 /** Manages cache files in an automatically created subdirectory. */
 public class CacheFileManager implements FileManager {
   private static final Logger logger = LogManager.getLogger(CacheFileManager.class);
-  private static final String BASE_DIRECTORY = "temp"; // or get from config
 
   private final Path directory;
   private final Set<String> activeFiles;
 
-  public CacheFileManager() throws IOException {
-    // Create unique subdirectory for this manager instance
-    String uniqueDir = UUID.randomUUID().toString();
-    this.directory = Path.of(BASE_DIRECTORY, uniqueDir);
-    this.activeFiles = new HashSet<>();
-
-    // Create directories
-    Files.createDirectories(directory);
-    logger.debug("Created cache directory: {}", directory);
-  }
-
-  // Alternative constructor to specify base directory
   public CacheFileManager(String baseDir) throws IOException {
     String uniqueDir = UUID.randomUUID().toString();
     this.directory = Path.of(baseDir, uniqueDir);

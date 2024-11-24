@@ -10,9 +10,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import model.Tuple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import physicaloperator.base.PhysicalOperator;
 
 public class HelperMethods {
+
+  static Logger logger = LogManager.getLogger(HelperMethods.class);
 
   public static List<Tuple> collectAllTuples(PhysicalOperator operator) {
     List<Tuple> tuples = new ArrayList<>();
@@ -51,6 +55,7 @@ public class HelperMethods {
   }
 
   public static void convertToBinaryFiles(String sourceDir, String destDir) throws IOException {
+    logger.info("Converting human readable files to binary files");
     File humanReadableDir = new File(sourceDir);
     File binaryDataDir = new File(destDir);
     binaryDataDir.mkdirs();

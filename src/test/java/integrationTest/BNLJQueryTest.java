@@ -2,10 +2,8 @@ package integrationTest;
 
 import static testUtil.HelperMethods.compareTupleListsAnyOrder;
 
-import config.PhysicalPlanConfig;
 import config.PhysicalPlanConfig.JoinMethod;
 import config.PhysicalPlanConfig.SortMethod;
-
 import java.io.IOException;
 import java.util.List;
 import model.Tuple;
@@ -20,12 +18,13 @@ public class BNLJQueryTest extends BasicQueryTestLarge {
   @Override
   void configureJoinAndSortMethods() {
     logger.info("Configuring BNLJ and in-memory sort");
-    PhysicalPlanConfig.getInstance().setJoinConfig(JoinMethod.BNLJ, 5);
-    PhysicalPlanConfig.getInstance().setSortConfig(SortMethod.IN_MEMORY, 0);
+    physicalPlanConfig.setJoinConfig(JoinMethod.BNLJ, 5);
+    physicalPlanConfig.setSortConfig(SortMethod.IN_MEMORY, 0);
   }
 
   @Override
-  void verifyQueryResults(List<Tuple>expectedTuples, List<Tuple> tuples) throws IOException {
+  protected void verifyQueryResults(List<Tuple> expectedTuples, List<Tuple> tuples)
+      throws IOException {
     if (!compareTupleListsAnyOrder(expectedTuples, tuples)) {
       throw new AssertionError("Query results do not match");
     }

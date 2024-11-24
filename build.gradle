@@ -59,6 +59,12 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }
 
+tasks.test {
+    useJUnitPlatform {
+        excludeTags 'performanceTest'
+    }
+}
+
 jar {
     manifest {
         attributes 'Implementation-Title': 'Cornell DB Practicum',

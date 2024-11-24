@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import testUtil.QueryTestBase;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BasicQueryTestLarge extends QueryTestBase {
@@ -24,14 +25,13 @@ public class BasicQueryTestLarge extends QueryTestBase {
   @BeforeAll
   void setupLargeEnvironment() throws JSQLParserException, IOException, URISyntaxException {
     logger.info("Setting up large database environment");
-    setupEnvironment("large");
-
+    setupEnvironment("integration_test_samples/large");
     configureJoinAndSortMethods();
   }
 
   void configureJoinAndSortMethods() {
-    PhysicalPlanConfig.getInstance().setJoinConfig(PhysicalPlanConfig.JoinMethod.TNLJ, 0);
-    PhysicalPlanConfig.getInstance().setSortConfig(PhysicalPlanConfig.SortMethod.IN_MEMORY, 0);
+    physicalPlanConfig.setJoinConfig(PhysicalPlanConfig.JoinMethod.TNLJ, 0);
+    physicalPlanConfig.setSortConfig(PhysicalPlanConfig.SortMethod.IN_MEMORY, 0);
   }
 
   @ParameterizedTest(name = "Query #{arguments}")
@@ -46,7 +46,7 @@ public class BasicQueryTestLarge extends QueryTestBase {
   }
 
   @Override
-  List<Tuple> getExpectedResult(int index) throws IOException {
+  protected List<Tuple> getExpectedResult(int index) throws IOException {
     String expectedPath = baseDir + "/output_expected_binary/query" + (index + 1);
     return readBinary(expectedPath);
   }

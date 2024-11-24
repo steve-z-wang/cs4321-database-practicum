@@ -5,6 +5,7 @@ import static config.PhysicalPlanConfig.PAGE_SIZE;
 
 import config.PhysicalPlanConfig;
 import io.cache.CacheFileManager;
+import io.cache.CacheFileManagerRegistry;
 import io.reader.BinaryTupleReader;
 import io.reader.TupleReader;
 import io.writer.BinaryTupleWriter;
@@ -35,9 +36,6 @@ public class ExternalSortOperator extends PhysicalOperator {
     super(operator.getOutputSchema());
 
     PhysicalPlanConfig config = PhysicalPlanConfig.getInstance();
-    if (config.getSortMethod() != PhysicalPlanConfig.SortMethod.EXTERNAL) {
-      throw new RuntimeException("Calling external sort operator but expect in memeory sort");
-    }
 
     this.childOperator = operator;
 
@@ -49,7 +47,7 @@ public class ExternalSortOperator extends PhysicalOperator {
     this.tupleComparator = new SortTupleComparator(orderByElements, this.outputSchema);
 
     try {
-      this.cacheFileManager = new CacheFileManager();
+      this.cacheFileManager = CacheFileManagerRegistry.createManager();
     } catch (IOException e) {
       logger.error("Error creating ExternalSortOperator: ", e);
     }
@@ -96,7 +94,6 @@ public class ExternalSortOperator extends PhysicalOperator {
    * @return tempFiles A list of created file
    */
   private List<String> createInitialRuns() {
-    logger.debug("Creating initial runs ");
 
     List<String> runFiles = new ArrayList<>();
     // use the whole block as we only use one buffer at a time for the first pass
@@ -131,7 +128,6 @@ public class ExternalSortOperator extends PhysicalOperator {
   }
 
   private List<String> createMergeRuns(int passCount, List<String> runFiles) {
-    logger.debug("Creating runs for the {}-th merge pass", passCount);
 
     List<String> newRunFiles = new ArrayList<>();
     // we have B page, B-1 pages are for the readers
@@ -155,7 +151,6 @@ public class ExternalSortOperator extends PhysicalOperator {
       writeMergeRun(runFileName, minHeap);
 
       // delete the old run file
-      logger.debug("Deleting previous run {}", filesToProcess);
       try {
         for (String file : filesToProcess) {
           cacheFileManager.deleteFile(file);
@@ -172,7 +167,6 @@ public class ExternalSortOperator extends PhysicalOperator {
   }
 
   private void writeMergeRun(String runFileName, PriorityQueue<HeapNode> minHeap) {
-    logger.debug("Creating run {}", runFileName);
     try (FileChannel channel = cacheFileManager.getWriteChannel(runFileName);
         TupleWriter writer = new BinaryTupleWriter(channel, this.outputSchema.size())) {
 
@@ -195,7 +189,6 @@ public class ExternalSortOperator extends PhysicalOperator {
   }
 
   private PriorityQueue<HeapNode> initialMergeHeap(List<String> filesToProcess) {
-    logger.debug("Initialize heap for {}", filesToProcess);
     PriorityQueue<HeapNode> minHeap =
         new PriorityQueue<>(
             (node1, node2) -> this.tupleComparator.compare(node1.tuple(), node2.tuple()));

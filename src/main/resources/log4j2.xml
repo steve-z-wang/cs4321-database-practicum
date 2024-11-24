@@ -18,7 +18,7 @@
             <AppenderRef ref="FileAppender" />
         </Logger>
         <!-- Root Logger: Configuration that applies to all loggers in the project -->
-        <Root level="debug">
+        <Root level="info">
             <AppenderRef ref="ConsoleAppender"/>
             <AppenderRef ref="FileAppender"/>
         </Root>

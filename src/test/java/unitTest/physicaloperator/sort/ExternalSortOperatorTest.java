@@ -4,6 +4,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import config.PhysicalPlanConfig;
+import io.cache.CacheFileManagerRegistry;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +15,7 @@ import model.Tuple;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.OrderByElement;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -98,5 +101,10 @@ public class ExternalSortOperatorTest {
 
   private static IntStream pageBufferConfigs() {
     return IntStream.of(3, 5, 9, 10);
+  }
+
+  @AfterAll
+  public static void cleanup() throws IOException {
+    CacheFileManagerRegistry.cleanupAll();
   }
 }
