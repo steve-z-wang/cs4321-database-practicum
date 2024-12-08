@@ -21,7 +21,7 @@ import net.sf.jsqlparser.statement.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 
 public abstract class QueryTestBase {
   private static final Logger logger = LogManager.getLogger(QueryTestBase.class);

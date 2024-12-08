@@ -12,7 +12,7 @@ import java.util.List;
 import model.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 
 public class HelperMethods {
 

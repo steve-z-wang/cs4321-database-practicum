@@ -16,7 +16,7 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 
 /**
  * Top level harness class; reads queries from an input file one at a time, processes them and sends

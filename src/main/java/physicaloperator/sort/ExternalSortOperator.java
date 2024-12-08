@@ -19,7 +19,7 @@ import model.Tuple;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 
 public class ExternalSortOperator extends PhysicalOperator {
   private static final Logger logger = LogManager.getLogger(ExternalSortOperator.class);
@@ -44,7 +44,7 @@ public class ExternalSortOperator extends PhysicalOperator {
     this.initPassBufferSize =
         (this.pagesPerBlock - 1) * PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
 
-    this.tupleComparator = new SortTupleComparator(orderByElements, this.outputSchema);
+    this.tupleComparator = new SortTupleComparator(this.outputSchema, orderByElements);
 
     try {
       this.cacheFileManager = CacheFileManagerRegistry.createManager();

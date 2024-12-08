@@ -20,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.stubbing.OngoingStubbing;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 import physicaloperator.sort.ExternalSortOperator;
 import physicaloperator.sort.SortTupleComparator;
 import testUtil.HelperMethods;
@@ -61,7 +61,7 @@ public class ExternalSortOperatorTest {
       obe.setExpression(childSchema.get(i));
       orderByElements.add(obe);
     }
-    SortTupleComparator comparator = new SortTupleComparator(orderByElements, childSchema);
+    SortTupleComparator comparator = new SortTupleComparator(childSchema, orderByElements);
 
     // generate test data set
     Random random = new Random();

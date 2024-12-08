@@ -8,17 +8,17 @@ import java.util.ArrayList;
 import java.util.function.Supplier;
 import model.Tuple;
 import net.sf.jsqlparser.expression.Expression;
-import physicaloperator.base.BooleanExpressionEvaluator;
-import physicaloperator.base.ExpressionContext;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
+import physicaloperator.QueryConditionContext;
+import physicaloperator.QueryConditionEvaluator;
 
 public class BlockNestedLoopJoinOperator extends PhysicalOperator {
   private final PhysicalOperator outerOperator;
   private final PhysicalOperator innerOperator;
   private final Expression condition;
   private final Supplier<Tuple> selectedGetNextTuple;
-  private final ExpressionContext expressionContext;
-  private final BooleanExpressionEvaluator evaluator;
+  private final QueryConditionContext queryConditionContext;
+  private final QueryConditionEvaluator evaluator;
 
   private Tuple[] outerBlockBuffer;
   private int tuplesPerBlock;
@@ -59,12 +59,12 @@ public class BlockNestedLoopJoinOperator extends PhysicalOperator {
     // Check if the condition is null and select the correct behavior
     if (condition == null) {
       this.selectedGetNextTuple = this::getNextTupleWithoutCondition;
-      this.expressionContext = null;
+      this.queryConditionContext = null;
       this.evaluator = null;
     } else {
       this.selectedGetNextTuple = this::getNextTupleWithCondition;
-      this.expressionContext = new ExpressionContext(this.outputSchema);
-      this.evaluator = new BooleanExpressionEvaluator();
+      this.queryConditionContext = new QueryConditionContext(this.outputSchema);
+      this.evaluator = new QueryConditionEvaluator();
     }
 
     // Initialize buffer
@@ -119,8 +119,8 @@ public class BlockNestedLoopJoinOperator extends PhysicalOperator {
           Tuple outerTuple = outerBlockBuffer[currentBufferIndex++];
           Tuple combinedTuple = outerTuple.append(currentInnerTuple);
 
-          this.expressionContext.setContext(combinedTuple.getAllElements());
-          if (condition.accept(this.evaluator, this.expressionContext)) {
+          this.queryConditionContext.setContext(combinedTuple.getAllElements());
+          if (condition.accept(this.evaluator, this.queryConditionContext)) {
             return combinedTuple;
           }
         }

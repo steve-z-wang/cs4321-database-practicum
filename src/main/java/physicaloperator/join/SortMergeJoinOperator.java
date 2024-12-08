@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import model.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 
 /**
  * Implements Sort-Merge Join algorithm. Algorithm logic: 1. Advance through both relations until

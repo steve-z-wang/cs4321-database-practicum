@@ -10,7 +10,8 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
+import util.ColumnUtil;
 
 /**
  * The expression would only be an AndExpression or an EqualsTo expression,
@@ -38,15 +39,9 @@ public class SMJConditionExtractor extends ExpressionVisitorAdapter<Void> {
     rightColumns = rightOperator.getOutputSchema();
   }
 
-  private String getColumnName(Column column) {
-    // get the name with alias if exist
-    return column.getFullyQualifiedName(true);
-  }
-
   private boolean isFromLeftOperator(Column column) {
-    String columnName = getColumnName(column);
     for (Column leftColumn : leftColumns) {
-      if (getColumnName(leftColumn).equals(columnName)) {
+      if (ColumnUtil.compareColumns(leftColumn, column) == 0) {
         return true;
       }
     }
@@ -54,9 +49,8 @@ public class SMJConditionExtractor extends ExpressionVisitorAdapter<Void> {
   }
 
   private boolean isFromRightOperator(Column column) {
-    String columnName = getColumnName(column);
     for (Column rightColumn : rightColumns) {
-      if (getColumnName(rightColumn).equals(columnName)) {
+      if (ColumnUtil.compareColumns(rightColumn, column) == 0) {
         return true;
       }
     }

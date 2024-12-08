@@ -18,7 +18,7 @@ import net.sf.jsqlparser.schema.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 import physicaloperator.join.TupleNestedLoopJoinOperator;
 
 class TupleNestedLoopJoinOperatorTest {

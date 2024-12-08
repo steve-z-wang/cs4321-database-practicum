@@ -5,7 +5,7 @@ import logicaloperator.LogicalOperator;
 import net.sf.jsqlparser.statement.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 
 /**
  * Class to translate a JSQLParser statement into a relational algebra query plan. For now only

@@ -11,7 +11,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
-import physicaloperator.base.BooleanExpressionEvaluator;
+import physicaloperator.QueryConditionEvaluator;
 
 /**
  * Class to process the WHERE clause of the SQL statement and separate join conditions from filter
@@ -139,8 +139,8 @@ public class QueryConditionExtractor extends ExpressionVisitorAdapter<Void> {
       handleFilterCondition(comparison, rightTableKey);
     } else {
       // if non is a Column, we can evaulate it now
-      BooleanExpressionEvaluator booleanExpressionEvaluator = new BooleanExpressionEvaluator();
-      Boolean isTrue = comparison.accept(booleanExpressionEvaluator, null);
+      QueryConditionEvaluator queryConditionEvaluator = new QueryConditionEvaluator();
+      Boolean isTrue = comparison.accept(queryConditionEvaluator, null);
       if (!isTrue) {
         this.alwaysFalseCondition = true;
       }

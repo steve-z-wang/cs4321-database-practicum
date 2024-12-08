@@ -13,6 +13,7 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import util.ColumnUtil;
 
 public class LogicalPlanBuilder {
   Logger logger = LogManager.getLogger(LogicalPlanBuilder.class);
@@ -169,13 +170,12 @@ public class LogicalPlanBuilder {
     for (Column column : outputSchema) {
 
       if (useOrdering()) {
+
         // check if the column is in the order by elements
         boolean isInOrderByElements = false;
         for (OrderByElement orderByElement : orderByElements) {
           Column orderByColumn = (Column) orderByElement.getExpression();
-          if (column
-              .getFullyQualifiedName(true)
-              .equals(orderByColumn.getFullyQualifiedName(true))) {
+          if (ColumnUtil.compareColumns(column, orderByColumn) == 0) {
             isInOrderByElements = true;
             break;
           }

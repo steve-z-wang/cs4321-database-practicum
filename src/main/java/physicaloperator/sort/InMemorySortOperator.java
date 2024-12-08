@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import model.Tuple;
 import net.sf.jsqlparser.statement.select.OrderByElement;
-import physicaloperator.base.PhysicalOperator;
+import physicaloperator.PhysicalOperator;
 
 public class InMemorySortOperator extends PhysicalOperator {
   private final PhysicalOperator childOperator;
@@ -49,7 +49,7 @@ public class InMemorySortOperator extends PhysicalOperator {
 
     // Sort the buffer based on the specified order-by elements
     this.internalBuffer.sort(
-        new SortTupleComparator(this.orderByElements, this.childOperator.getOutputSchema()));
+        new SortTupleComparator(this.childOperator.getOutputSchema(), this.orderByElements));
     this.curIndex = 0;
   }
 }
