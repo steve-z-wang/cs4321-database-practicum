@@ -115,8 +115,8 @@ public class QueryConditionExtractor extends ExpressionVisitorAdapter<Void> {
     Expression leftExpr = comparison.getLeftExpression();
     Expression rightExpr = comparison.getRightExpression();
 
+    // If both sides are columns, check their tables
     if (leftExpr instanceof Column leftColumn && rightExpr instanceof Column rightColumn) {
-      // If both sides are columns, check their tables
       String leftTableKey = getTableKey(leftColumn.getTable());
       String rightTableKey = getTableKey(rightColumn.getTable());
 
@@ -127,16 +127,18 @@ public class QueryConditionExtractor extends ExpressionVisitorAdapter<Void> {
         // Columns are from the same table, handle as filter condition
         handleFilterCondition(comparison, leftTableKey);
       }
-    } else if (leftExpr instanceof Column leftColumn) {
-      // If the left is a Column
 
+      // If the left is a Column
+    } else if (leftExpr instanceof Column leftColumn) {
       String leftTableKey = getTableKey(leftColumn.getTable());
       handleFilterCondition(comparison, leftTableKey);
-    } else if (rightExpr instanceof Column rightColumn) {
-      // if the right is a Column
 
+      // if the right is a Column
+    } else if (rightExpr instanceof Column rightColumn) {
       String rightTableKey = getTableKey(rightColumn.getTable());
       handleFilterCondition(comparison, rightTableKey);
+
+      // if both are not Columns
     } else {
       // if non is a Column, we can evaulate it now
       QueryConditionEvaluator queryConditionEvaluator = new QueryConditionEvaluator();

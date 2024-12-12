@@ -19,11 +19,6 @@ public class TupleNestedLoopJoinOperator extends PhysicalOperator {
   private Tuple leftTuple;
 
   public TupleNestedLoopJoinOperator(
-      PhysicalOperator leftOperator, PhysicalOperator rightOperator) {
-    this(leftOperator, rightOperator, null);
-  }
-
-  public TupleNestedLoopJoinOperator(
       PhysicalOperator leftOperator, PhysicalOperator rightOperator, Expression expression) {
     super(null);
 

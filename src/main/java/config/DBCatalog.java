@@ -1,7 +1,6 @@
 package config;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  * <p>Call by using DBCatalog.getInstance();
  */
 public class DBCatalog {
-  private final Logger logger = LogManager.getLogger();
+  private final Logger logger = LogManager.getLogger(DBCatalog.class);
 
   private final HashMap<String, ArrayList<Column>> tables;
   private static DBCatalog db;
@@ -67,16 +66,6 @@ public class DBCatalog {
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
-  }
-
-  /**
-   * Gets path to file where a particular table is stored
-   *
-   * @param tableName table name
-   * @return file where table is found on disk
-   */
-  public File getFileForTable(String tableName) {
-    return new File(getTablePath(tableName));
   }
 
   public String getTablePath(String tableName) {

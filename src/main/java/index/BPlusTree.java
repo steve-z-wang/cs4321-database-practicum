@@ -26,47 +26,113 @@ public class BPlusTree {
     return order;
   }
 
+  public BPlusTreeLeafNode getFirstLeafNode(FileChannel indexChannel, ByteBuffer buffer)
+      throws IOException {
+    return loadLeafNode(indexChannel, buffer, 1);
+  }
+
+  public BPlusTreeLeafNode findLeafNodeByKey(
+      FileChannel indexChannel, ByteBuffer buffer, int targetKey) throws IOException {
+
+    // load the root node
+    BPlusTreeIndexNode node = loadIndexNode(indexChannel, buffer, rootAddress);
+
+    while (true) {
+
+      // find next child
+      int childAddress = node.findChildByKey(targetKey);
+
+      // if the child is a leaf node, return the leaf node
+      if (isLeafNode(childAddress)) {
+        return loadLeafNode(indexChannel, buffer, childAddress);
+      }
+
+      node = loadIndexNode(indexChannel, buffer, childAddress);
+    }
+  }
+
+  public BPlusTreeLeafNode getNextLeafNode(
+      FileChannel indexChannel, ByteBuffer buffer, BPlusTreeLeafNode leafNode) throws IOException {
+
+    int nextAddress = leafNode.getAddress() + 1;
+
+    // if the next address is not a leaf node
+    if (!isLeafNode(nextAddress)) {
+      return null;
+    }
+
+    return loadLeafNode(indexChannel, buffer, leafNode.getAddress() + 1);
+  }
+
   /** Serialize a B+ tree to disk */
   public static void buildAndSerializeBPlusTree(
-      FileChannel channel, List<Integer> keys, List<RecordId> recordIds, int order)
+      FileChannel channel,
+      ByteBuffer buffer,
+      List<Integer> keys,
+      List<RecordId> recordIds,
+      int order)
       throws IOException {
     if (keys.isEmpty()) {
       return;
     }
 
-    // sort keys and recordIds
+    // sort the key and recordId lists and build RecordEntries
     ParallelListSorter.sortParallelLists(keys, recordIds);
-
-    // create record entries
     List<RecordEntry> entries = buildRecordEntries(keys, recordIds);
 
-    // create buffer for writing to disk
-    ByteBuffer buffer = ByteBuffer.allocate(DBConstants.INDEX_PAGE_SIZE);
-
-    // create a tree with one dummy node
     List<BPlusTreeNode> treeNodes = new ArrayList<>();
     treeNodes.add(new BPlusTreeLeafNode());
 
-    // build leaf nodes
+    // build leaf nodes level
     int currentLevelStart = 1;
     int leafNodeCreated = buildLeafNodeLevel(treeNodes, currentLevelStart, entries, order);
 
-    // record the number of leaf nodes
-
+    // build index nodes levels
     int nodeCreated = leafNodeCreated;
     do {
-
       int prevLevelStart = currentLevelStart;
       currentLevelStart = prevLevelStart + nodeCreated;
-
-      // build index nodes
       nodeCreated = buildIndexNodeLevel(treeNodes, prevLevelStart, currentLevelStart, order);
-
     } while (nodeCreated != 1);
 
+    // Write Tree to File
+    writeBPlusTree(channel, order, treeNodes, buffer, leafNodeCreated);
+  }
 
+  /**
+   * Deserialize a B+ tree index node from a
+   *
+   * @return the root node of the B+ tree index
+   */
+  public static BPlusTree deserialize(FileChannel indexFilechannel, ByteBuffer buffer)
+      throws IOException {
+
+    BPlusTree tree = new BPlusTree();
+
+    // read the first page of the index file
+    loadPage(indexFilechannel, buffer, 0);
+    tree.rootAddress = buffer.getInt(0);
+    tree.numLeafNodes = buffer.getInt(4);
+    tree.order = buffer.getInt(8);
+
+    return tree;
+  }
+
+  /** Helper methods for traversing a B+ tree */
+  private boolean isLeafNode(int nodeAddress) {
+    return nodeAddress <= numLeafNodes;
+  }
+
+  /** Helper method for building and serializing a B+ tree */
+  private static void writeBPlusTree(
+      FileChannel channel,
+      int order,
+      List<BPlusTreeNode> treeNodes,
+      ByteBuffer buffer,
+      int leafNodeCreated)
+      throws IOException {
     // write the header
-    int rootAddress = currentLevelStart;
+    int rootAddress = treeNodes.size() - 1;
     writeBPlusTreeHeader(channel, buffer, rootAddress, leafNodeCreated, order);
 
     // write the nodes
@@ -74,8 +140,6 @@ public class BPlusTree {
       writeBPlusTreeNode(channel, buffer, treeNodes.get(nodeAddress), nodeAddress);
     }
   }
-
-  /** serialization helper methods */
 
   private static void writeBPlusTreeHeader(
       FileChannel channel, ByteBuffer buffer, int rootAddress, int numLeafNodes, int order)
@@ -88,7 +152,6 @@ public class BPlusTree {
     buffer.flip();
 
     int bytesWritten = channel.write(buffer);
-
   }
 
   private static void writeBPlusTreeNode(
@@ -130,8 +193,12 @@ public class BPlusTree {
     return entries;
   }
 
-
-  private static void buildLeafNode(List<BPlusTreeNode> treeNodes, List<RecordEntry> entries, int startIndex, int endIndex, int currentNodeAddress) {
+  private static void buildLeafNode(
+      List<BPlusTreeNode> treeNodes,
+      List<RecordEntry> entries,
+      int startIndex,
+      int endIndex,
+      int currentNodeAddress) {
     BPlusTreeLeafNode leafNode = new BPlusTreeLeafNode();
 
     leafNode.setAddress(currentNodeAddress);
@@ -193,7 +260,8 @@ public class BPlusTree {
     return findLeftMostKey(treeNodes, childNode);
   }
 
-  private static void buildIndexNode(List<BPlusTreeNode> treeNodes, int startIndex, int endIndex, int nextNodeAddress) {
+  private static void buildIndexNode(
+      List<BPlusTreeNode> treeNodes, int startIndex, int endIndex, int nextNodeAddress) {
     BPlusTreeIndexNode indexNode = new BPlusTreeIndexNode();
     indexNode.setAddress(nextNodeAddress);
     int readIndex = startIndex;
@@ -212,7 +280,8 @@ public class BPlusTree {
     treeNodes.add(indexNode);
   }
 
-  private static int buildIndexNodeLevel(List<BPlusTreeNode> treeNodes, int lastLevelStartIndex, int lastLevelEndIndex, int d) {
+  private static int buildIndexNodeLevel(
+      List<BPlusTreeNode> treeNodes, int lastLevelStartIndex, int lastLevelEndIndex, int d) {
 
     int readIndex = lastLevelStartIndex;
     int nextNodeAddress = lastLevelEndIndex;
@@ -240,50 +309,7 @@ public class BPlusTree {
     return nodesCreated;
   }
 
-  /**
-   * Deserialize a B+ tree index node from a
-   *
-   * @return the root node of the B+ tree index
-   */
-  public static BPlusTree deserialize(FileChannel indexFilechannel, ByteBuffer buffer)
-      throws IOException {
-
-    BPlusTree tree = new BPlusTree();
-
-    // read the first page of the index file
-    loadPage(indexFilechannel, buffer, 0);
-    tree.rootAddress = buffer.getInt(0);
-    tree.numLeafNodes = buffer.getInt(4);
-    tree.order = buffer.getInt(8);
-
-    return tree;
-  }
-
-  public BPlusTreeLeafNode getFirstLeafNode(FileChannel indexChannel, ByteBuffer buffer)
-      throws IOException {
-    return loadLeafNode(indexChannel, buffer, 1);
-  }
-
-  public BPlusTreeLeafNode findLeafNodeByKey(
-      FileChannel indexChannel, ByteBuffer buffer, int targetKey) throws IOException {
-
-    // load the root node
-    BPlusTreeIndexNode node = loadIndexNode(indexChannel, buffer, rootAddress);
-
-    while (true) {
-
-      // find next child
-      int childAddress = node.findChildByKey(targetKey);
-
-      // if the child is a leaf node, return the leaf node
-      if (isLeafNode(childAddress)) {
-        return loadLeafNode(indexChannel, buffer, childAddress);
-      }
-
-      node = loadIndexNode(indexChannel, buffer, childAddress);
-    }
-  }
-
+  /** Helper methods for deserializing a B+ tree */
   public BPlusTreeIndexNode loadIndexNode(FileChannel channel, ByteBuffer buffer, int nodeAddress)
       throws IOException {
     loadPage(channel, buffer, nodeAddress);
@@ -304,22 +330,5 @@ public class BPlusTree {
       throw new IOException("Failed to read complete page at nodeAddress: " + nodeAddress);
     }
     buffer.flip();
-  }
-
-  private boolean isLeafNode(int nodeAddress) {
-    return nodeAddress <= numLeafNodes;
-  }
-
-  public BPlusTreeLeafNode getNextLeafNode(
-      FileChannel indexChannel, ByteBuffer buffer, BPlusTreeLeafNode leafNode) throws IOException {
-
-    int nextAddress = leafNode.getAddress() + 1;
-
-    // if the next address is not a leaf node
-    if (!isLeafNode(nextAddress)) {
-      return null;
-    }
-
-    return loadLeafNode(indexChannel, buffer, leafNode.getAddress() + 1);
   }
 }

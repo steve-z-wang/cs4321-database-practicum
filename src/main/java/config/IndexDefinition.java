@@ -39,11 +39,6 @@ public class IndexDefinition {
     return order;
   }
 
-  public String getIndexFilePath() {
-    return String.format(
-        "%s/%s.%s", IndexConfigManager.getInstance().getIndexDir(), relation, attribute);
-  }
-
   @Override
   public String toString() {
     return String.format(

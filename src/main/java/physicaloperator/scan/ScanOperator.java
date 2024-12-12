@@ -29,7 +29,7 @@ public class ScanOperator extends PhysicalOperator {
       this.outputSchema.add(new Column(table, dbSchemaColumn.getColumnName()));
     }
 
-    // get file
+    // init tuple reader
     try {
       FileChannel channel =
           new FileInputStream(dbCatalog.getTablePath(table.getName())).getChannel();

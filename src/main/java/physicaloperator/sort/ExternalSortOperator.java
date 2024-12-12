@@ -25,14 +25,15 @@ public class ExternalSortOperator extends PhysicalOperator {
   private static final Logger logger = LogManager.getLogger(ExternalSortOperator.class);
 
   private final PhysicalOperator childOperator;
-  private final int pagesPerBlock;
+  private final int bufferPages;
   private final int initPassBufferSize;
   private final SortTupleComparator tupleComparator;
 
   private CacheFileManager cacheFileManager;
   private BinaryTupleReader resultReader = null;
 
-  public ExternalSortOperator(PhysicalOperator operator, List<OrderByElement> orderByElements) {
+  public ExternalSortOperator(
+      PhysicalOperator operator, List<OrderByElement> orderByElements, int bufferPages) {
     super(operator.getOutputSchema());
 
     PhysicalPlanConfig config = PhysicalPlanConfig.getInstance();
@@ -40,14 +41,14 @@ public class ExternalSortOperator extends PhysicalOperator {
     this.childOperator = operator;
 
     // the total memory that we can use at a time
-    this.pagesPerBlock = config.getSortBufferPages();
+    this.bufferPages = bufferPages;
     this.initPassBufferSize =
-        (this.pagesPerBlock - 1) * TABLE_PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
+        (this.bufferPages - 1) * TABLE_PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
 
     this.tupleComparator = new SortTupleComparator(this.outputSchema, orderByElements);
 
     try {
-      this.cacheFileManager = CacheFileManagerRegistry.createManager();
+      this.cacheFileManager = CacheFileManagerRegistry.getInstance().createManager();
     } catch (IOException e) {
       logger.error("Error creating ExternalSortOperator: ", e);
     }
@@ -151,7 +152,7 @@ public class ExternalSortOperator extends PhysicalOperator {
 
       // determine the files to process
       List<String> filesToProcess = new ArrayList<>();
-      for (int i = 0; i < pagesPerBlock - 1 && nextFileIndex < runFiles.size(); i++) {
+      for (int i = 0; i < bufferPages - 1 && nextFileIndex < runFiles.size(); i++) {
         filesToProcess.add(runFiles.get(nextFileIndex++));
       }
 

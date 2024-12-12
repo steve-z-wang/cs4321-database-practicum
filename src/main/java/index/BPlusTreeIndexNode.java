@@ -31,7 +31,7 @@ public class BPlusTreeIndexNode extends BPlusTreeNode {
     return keys.size();
   }
 
-  int getChildAtIndex(int index) {
+  public int getChildAtIndex(int index) {
     return children.get(index);
   }
 

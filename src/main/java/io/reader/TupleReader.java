@@ -18,7 +18,6 @@ public abstract class TupleReader {
   public void reset(int index) throws IOException {
     logger.error("Not implemented");
   }
-  ;
 
   public List<Tuple> getAllTuples() throws IOException {
     Tuple t;

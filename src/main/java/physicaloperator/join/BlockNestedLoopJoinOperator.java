@@ -3,7 +3,6 @@ package physicaloperator.join;
 import static utils.DBConstants.INT_SIZE;
 import static utils.DBConstants.TABLE_PAGE_SIZE;
 
-import config.PhysicalPlanConfig;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 import model.Tuple;
@@ -25,20 +24,6 @@ public class BlockNestedLoopJoinOperator extends PhysicalOperator {
   private int currentBufferIndex;
   private int currentBufferSize;
   private Tuple currentInnerTuple;
-
-  public BlockNestedLoopJoinOperator(
-      PhysicalOperator outerOperator, PhysicalOperator innerOperator) {
-    this(outerOperator, innerOperator, null);
-  }
-
-  public BlockNestedLoopJoinOperator(
-      PhysicalOperator outerOperator, PhysicalOperator innerOperator, Expression condition) {
-    this(
-        outerOperator,
-        innerOperator,
-        condition,
-        PhysicalPlanConfig.getInstance().getJoinBufferPages());
-  }
 
   public BlockNestedLoopJoinOperator(
       PhysicalOperator outerOperator,

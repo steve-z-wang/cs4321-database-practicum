@@ -40,9 +40,11 @@ public class LogicalPlanBuilder {
     if (joins == null && where != null) {
       // If there are no joins but a WHERE clause exists, apply selection filtering
       operator = new LogicalSelect(operator, where);
+
     } else if (joins != null && where == null) {
       // If joins exist but no WHERE clause, process the joins without filtering
       operator = applySimpleJoins(operator);
+
     } else if (joins != null) {
       // If both joins and WHERE clause exist, process joins and apply selection filtering
       operator = applyJoins(mainTable, operator);
@@ -97,12 +99,23 @@ public class LogicalPlanBuilder {
     return operator;
   }
 
+  private LogicalOperator applySimpleJoins(LogicalOperator operator) {
+    LogicalOperator previousOperator = operator;
+    for (Join join : joins) {
+      Table joinTable = (Table) join.getRightItem();
+      operator = new LogicalScan(joinTable);
+      operator = new LogicalJoin(previousOperator, operator, null);
+      previousOperator = operator;
+    }
+    return operator;
+  }
+
   private LogicalOperator applyJoins(Table mainTable, LogicalOperator operator) {
     // Process where clause
     QueryConditionExtractor queryConditionExtractor = new QueryConditionExtractor(fromItem, joins);
     where.accept(queryConditionExtractor, null);
 
-    // Filter conditions for the main table
+    // Apply filter conditions for the main table
     Expression filterCondition = queryConditionExtractor.getFilterConditionsByTable(mainTable);
     if (filterCondition != null) {
       operator = new LogicalSelect(operator, filterCondition);
@@ -127,17 +140,6 @@ public class LogicalPlanBuilder {
       operator = new LogicalJoin(leftOperator, operator, joinCondition);
 
       leftOperator = operator;
-    }
-    return operator;
-  }
-
-  private LogicalOperator applySimpleJoins(LogicalOperator operator) {
-    LogicalOperator previousOperator = operator;
-    for (Join join : joins) {
-      Table joinTable = (Table) join.getRightItem();
-      operator = new LogicalScan(joinTable);
-      operator = new LogicalJoin(previousOperator, operator, null);
-      previousOperator = operator;
     }
     return operator;
   }

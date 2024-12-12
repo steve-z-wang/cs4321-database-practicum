@@ -1,3 +1,7 @@
+//------------------------------------------------------------------------------
+// Plugin Configuration
+//------------------------------------------------------------------------------
+
 import com.github.sherter.googlejavaformatgradleplugin.GoogleJavaFormat
 
 plugins {
@@ -5,6 +9,10 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.9'
 
 }
+
+//------------------------------------------------------------------------------
+// Project Properties and Formatting
+//------------------------------------------------------------------------------
 
 Properties props = new Properties()
 file('config.properties').withInputStream { props.load(it) }
@@ -16,9 +24,71 @@ googleJavaFormat {
 group 'cornell.cs.db'
 version props["DELIVERABLE"]
 
+//------------------------------------------------------------------------------
+// Source Sets Configuration
+//------------------------------------------------------------------------------
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/unit/java']
+        }
+        resources {
+            srcDirs = ['src/test/unit/resources']
+        }
+    }
+    integrationTest {
+        java {
+            srcDirs = ['src/test/integration/java']
+        }
+        resources {
+            srcDirs = ['src/test/integration/resources']
+        }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    performanceTest {
+        java {
+            srcDirs = ['src/test/performance/java']  // Matches your performance test location
+        }
+        resources {
+            srcDirs = ['src/test/performance/resources']
+        }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+//------------------------------------------------------------------------------
+// Repository Configuration
+//------------------------------------------------------------------------------
+
 repositories {
     mavenCentral()
 }
+
+//------------------------------------------------------------------------------
+// Test Configuration Extensions
+//------------------------------------------------------------------------------
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+    performanceTestImplementation.extendsFrom testImplementation
+    performanceTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+//------------------------------------------------------------------------------
+// Dependencies
+//------------------------------------------------------------------------------
 
 dependencies {
     // JSQLParser
@@ -38,9 +108,52 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter:5.13.0'
 }
 
+//------------------------------------------------------------------------------
+// Test Task Configuration
+//------------------------------------------------------------------------------
+// Integration Test Task
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+
+// Performance Test Task
+tasks.register('performanceTest', Test) {
+    description = 'Runs performance tests.'
+    group = 'verification'
+
+    testClassesDirs = sourceSets.performanceTest.output.classesDirs
+    classpath = sourceSets.performanceTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+
+// Combined Test Task
+tasks.register('testAll') {
+    description = 'Runs all tests including unit, integration, and performance tests'
+    group = 'verification'
+    dependsOn test, integrationTest, performanceTest
+}
+
+// Unit Test Configuration
 test {
     useJUnitPlatform()
 }
+
+tasks.test {
+    useJUnitPlatform {
+        excludeTags 'performanceTest'
+    }
+}
+
+//------------------------------------------------------------------------------
+// Build and Format Configuration
+//------------------------------------------------------------------------------
 
 build {
     dependsOn verifyGoogleJavaFormat
@@ -59,11 +172,9 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }
 
-tasks.test {
-    useJUnitPlatform {
-        excludeTags 'performanceTest'
-    }
-}
+//------------------------------------------------------------------------------
+// JAR Configuration
+//------------------------------------------------------------------------------
 
 jar {
     manifest {
@@ -79,3 +190,4 @@ jar {
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+

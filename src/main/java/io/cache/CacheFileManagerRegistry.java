@@ -1,6 +1,5 @@
 package io.cache;
 
-import config.PhysicalPlanConfig;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,42 +8,37 @@ import org.apache.logging.log4j.Logger;
 
 public class CacheFileManagerRegistry {
   private static Logger logger = LogManager.getLogger(CacheFileManagerRegistry.class);
-  private static final List<CacheFileManager> instances = new ArrayList<>();
 
-  /**
-   * Creates a new CacheFileManager instance and registers it.
-   *
-   * @return The newly created CacheFileManager instance
-   * @throws IOException If an error occurs during creation
-   */
-  public static synchronized CacheFileManager createManager() throws IOException {
+  private final List<CacheFileManager> instances;
+  private static CacheFileManagerRegistry registry;
 
-    PhysicalPlanConfig config = PhysicalPlanConfig.getInstance();
-    String baseDir = config.getCacheDirectory();
+  private String cacheDirectory;
 
-    CacheFileManager manager = new CacheFileManager(baseDir);
+  private CacheFileManagerRegistry() {
+    instances = new ArrayList<>();
+  }
+
+  public static CacheFileManagerRegistry getInstance() {
+    if (registry == null) {
+      registry = new CacheFileManagerRegistry();
+    }
+    return registry;
+  }
+
+  public void setCacheDirectory(String cacheDirectory) {
+    this.cacheDirectory = cacheDirectory;
+  }
+
+  public CacheFileManager createManager() throws IOException {
+    CacheFileManager manager = new CacheFileManager(cacheDirectory);
     instances.add(manager);
     return manager;
   }
 
-  /**
-   * Cleans up all registered CacheFileManager instances.
-   *
-   * @throws IOException If an error occurs during cleanup
-   */
-  public static synchronized void cleanupAll() throws IOException {
+  public void cleanupAll() throws IOException {
     for (CacheFileManager manager : instances) {
       manager.cleanup();
     }
     instances.clear();
-  }
-
-  /**
-   * Returns the list of all active CacheFileManager instances.
-   *
-   * @return List of CacheFileManager instances
-   */
-  public static synchronized List<CacheFileManager> getAllManagers() {
-    return new ArrayList<>(instances);
   }
 }

@@ -7,12 +7,14 @@ import io.reader.BinaryTupleReader;
 import io.reader.TupleReader;
 import io.writer.BinaryTupleWriter;
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import model.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import utils.DBConstants;
 import utils.TupleComparator;
 
 public class IndexBuilder {
@@ -63,8 +65,9 @@ public class IndexBuilder {
 
     // create the index file for the relation
     try (FileChannel fileChannel =
-        new FileOutputStream(indexDefinition.getIndexFilePath()).getChannel()) {
-      BPlusTree.buildAndSerializeBPlusTree(fileChannel, keys, recordIds, order);
+        new FileOutputStream(indexConfigManager.getIndexFilePath(indexDefinition)).getChannel()) {
+      ByteBuffer buffer = ByteBuffer.allocate(DBConstants.INDEX_PAGE_SIZE);
+      BPlusTree.buildAndSerializeBPlusTree(fileChannel, buffer, keys, recordIds, order);
     }
   }
 

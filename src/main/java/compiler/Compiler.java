@@ -5,6 +5,7 @@ import config.IndexConfigManager;
 import config.InterpreterConfig;
 import config.PhysicalPlanConfig;
 // import index.IndexBuilder;
+import index.IndexBuilder;
 import io.cache.CacheFileManagerRegistry;
 import io.writer.BinaryTupleWriter;
 import java.io.File;
@@ -61,17 +62,19 @@ public class Compiler {
       // Set up the physical plan config
       PhysicalPlanConfig.getInstance()
           .loadConfig(interpreterConfig.getInputDir() + "/plan_builder_config.txt");
-      PhysicalPlanConfig.getInstance().setCacheDir(interpreterConfig.getTempDir());
+
+      // Set up the cache directory
+      CacheFileManagerRegistry.getInstance().setCacheDirectory(interpreterConfig.getTempDir());
 
       // Read and parse queries
       String str = Files.readString(Paths.get(interpreterConfig + "/queries.sql"));
       Statements statements = CCJSqlParserUtil.parseStatements(str);
 
-      // // Create Index
-      // if (interpreterConfig.shouldBuildIndex()) {
-      //   IndexBuilder indexBuilder = new IndexBuilder();
-      //   indexBuilder.buildIndexes();
-      // }
+      // Create Index
+      if (interpreterConfig.shouldBuildIndex()) {
+        IndexBuilder indexBuilder = new IndexBuilder();
+        indexBuilder.buildIndexes();
+      }
 
       // Run queries
       if (interpreterConfig.shuoldProcessQueries()) {
@@ -101,7 +104,7 @@ public class Compiler {
 
       try {
         processSingleQuery(statement, counter);
-        CacheFileManagerRegistry.cleanupAll();
+        CacheFileManagerRegistry.getInstance().cleanupAll();
       } catch (Exception e) {
         logger.error("Error processing query: " + statement, e);
       }
