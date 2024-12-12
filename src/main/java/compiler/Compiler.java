@@ -1,8 +1,10 @@
 package compiler;
 
-import builder.QueryPlanBuilder;
 import config.DBCatalog;
+import config.IndexConfigManager;
+import config.InterpreterConfig;
 import config.PhysicalPlanConfig;
+// import index.IndexBuilder;
 import io.cache.CacheFileManagerRegistry;
 import io.writer.BinaryTupleWriter;
 import java.io.File;
@@ -17,6 +19,7 @@ import net.sf.jsqlparser.statement.Statements;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import physicaloperator.PhysicalOperator;
+import queryplan.QueryPlanBuilder;
 
 /**
  * Top level harness class; reads queries from an input file one at a time, processes them and sends
@@ -25,9 +28,7 @@ import physicaloperator.PhysicalOperator;
 public class Compiler {
   private static final Logger logger = LogManager.getLogger();
 
-  private static String outputDir;
-  private static String inputDir;
-  private static String cacheDir;
+  private static InterpreterConfig interpreterConfig;
   private static final boolean outputToFiles = true; // true = output to
   private static QueryPlanBuilder queryPlanBuilder;
 
@@ -42,22 +43,42 @@ public class Compiler {
    */
   public static void main(String[] args) {
 
-    inputDir = args[0];
-    outputDir = args[1];
-    cacheDir = args[2];
-    DBCatalog.getInstance().setDataDirectory(inputDir + "/db");
-    PhysicalPlanConfig.getInstance().setConfigFile(inputDir + "/plan_builder_config.txt");
-    PhysicalPlanConfig.getInstance().setCacheDirectory(cacheDir);
-
     try {
+
+      // Read interpreter config file
+      String interpreterConfigFilePath = args[0];
+      interpreterConfig = InterpreterConfig.getInstance();
+      interpreterConfig.loadConfig(interpreterConfigFilePath);
+
+      // Set up the database catalog
+      DBCatalog.getInstance().setDataDirectory(interpreterConfig.getInputDir() + "/db");
+
+      // Set up the index config
+      IndexConfigManager.getInstance()
+          .loadConfig(interpreterConfig.getInputDir() + "/db/index_info.txt");
+      IndexConfigManager.getInstance().setIndexDir(interpreterConfig.getInputDir() + "/db/indexes");
+
+      // Set up the physical plan config
+      PhysicalPlanConfig.getInstance()
+          .loadConfig(interpreterConfig.getInputDir() + "/plan_builder_config.txt");
+      PhysicalPlanConfig.getInstance().setCacheDir(interpreterConfig.getTempDir());
+
       // Read and parse queries
-      String str = Files.readString(Paths.get(inputDir + "/queries.sql"));
+      String str = Files.readString(Paths.get(interpreterConfig + "/queries.sql"));
       Statements statements = CCJSqlParserUtil.parseStatements(str);
 
-      queryPlanBuilder = new QueryPlanBuilder();
+      // // Create Index
+      // if (interpreterConfig.shouldBuildIndex()) {
+      //   IndexBuilder indexBuilder = new IndexBuilder();
+      //   indexBuilder.buildIndexes();
+      // }
 
-      cleanOutputDirectory();
-      processQueries(statements);
+      // Run queries
+      if (interpreterConfig.shuoldProcessQueries()) {
+        cleanOutputDirectory();
+        queryPlanBuilder = new QueryPlanBuilder();
+        processQueries(statements);
+      }
 
     } catch (Exception e) {
       System.err.println("Exception occurred in interpreter");
@@ -67,7 +88,8 @@ public class Compiler {
 
   private static void cleanOutputDirectory() {
     if (outputToFiles) {
-      for (File file : (new File(outputDir).listFiles())) file.delete(); // clean output directory
+      for (File file : (new File(interpreterConfig.getOutputDir()).listFiles()))
+        file.delete(); // clean output directory
     }
   }
 
@@ -93,7 +115,7 @@ public class Compiler {
     PhysicalOperator plan = queryPlanBuilder.buildPlan(statement);
 
     if (outputToFiles) {
-      Path outfile = Paths.get(outputDir).resolve("query" + counter);
+      Path outfile = Paths.get(interpreterConfig.getOutputDir()).resolve("query" + counter);
       logger.info("Output file: {}", outfile);
 
       // Create the file if it doesn't exist

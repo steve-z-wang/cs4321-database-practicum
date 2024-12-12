@@ -1,13 +1,12 @@
 package physicaloperator.sort;
 
-import static config.PhysicalPlanConfig.INT_SIZE;
-import static config.PhysicalPlanConfig.PAGE_SIZE;
+import static utils.DBConstants.INT_SIZE;
+import static utils.DBConstants.TABLE_PAGE_SIZE;
 
 import config.PhysicalPlanConfig;
 import io.cache.CacheFileManager;
 import io.cache.CacheFileManagerRegistry;
 import io.reader.BinaryTupleReader;
-import io.reader.TupleReader;
 import io.writer.BinaryTupleWriter;
 import io.writer.TupleWriter;
 import java.io.IOException;
@@ -20,6 +19,7 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import physicaloperator.PhysicalOperator;
+import utils.SortTupleComparator;
 
 public class ExternalSortOperator extends PhysicalOperator {
   private static final Logger logger = LogManager.getLogger(ExternalSortOperator.class);
@@ -42,7 +42,7 @@ public class ExternalSortOperator extends PhysicalOperator {
     // the total memory that we can use at a time
     this.pagesPerBlock = config.getSortBufferPages();
     this.initPassBufferSize =
-        (this.pagesPerBlock - 1) * PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
+        (this.pagesPerBlock - 1) * TABLE_PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
 
     this.tupleComparator = new SortTupleComparator(this.outputSchema, orderByElements);
 
@@ -75,17 +75,29 @@ public class ExternalSortOperator extends PhysicalOperator {
 
   @Override
   public void reset() {
-    resultReader.reset();
+    try {
+      resultReader.reset();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public void reset(int index) {
-    resultReader.reset(index);
+    try {
+      resultReader.reset(index);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public Tuple getNextTuple() {
-    return resultReader.getNextTuple();
+    try {
+      return resultReader.getNextTuple();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -180,7 +192,7 @@ public class ExternalSortOperator extends PhysicalOperator {
         if (tuple != null) {
           minHeap.add(new HeapNode(tuple, node.reader()));
         } else {
-          node.reader().close();
+          node.reader().getFileChannel().close();
         }
       }
     } catch (IOException e) {
@@ -195,7 +207,7 @@ public class ExternalSortOperator extends PhysicalOperator {
     try {
       for (String file : filesToProcess) {
         FileChannel channel = cacheFileManager.getReadChannel(file);
-        TupleReader reader = new BinaryTupleReader(channel);
+        BinaryTupleReader reader = new BinaryTupleReader(channel);
         Tuple firstTuple = reader.getNextTuple();
         if (firstTuple != null) {
           minHeap.offer(new HeapNode(firstTuple, reader));
@@ -211,4 +223,4 @@ public class ExternalSortOperator extends PhysicalOperator {
 /**
  * @param reader Your object that contains the list of values
  */
-record HeapNode(Tuple tuple, TupleReader reader) {}
+record HeapNode(Tuple tuple, BinaryTupleReader reader) {}

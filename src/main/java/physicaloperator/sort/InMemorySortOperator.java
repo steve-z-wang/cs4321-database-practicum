@@ -5,6 +5,7 @@ import java.util.List;
 import model.Tuple;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import physicaloperator.PhysicalOperator;
+import utils.SortTupleComparator;
 
 public class InMemorySortOperator extends PhysicalOperator {
   private final PhysicalOperator childOperator;

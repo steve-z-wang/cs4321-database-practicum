@@ -4,7 +4,7 @@ import java.util.List;
 import model.Tuple;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.OrderByElement;
-import physicaloperator.TupleComparator;
+import utils.TupleComparator;
 
 public class JoinTupleComparator extends TupleComparator {
   private final List<Integer> rightOrderByIndices;

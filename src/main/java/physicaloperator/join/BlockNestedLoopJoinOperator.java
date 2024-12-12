@@ -1,7 +1,7 @@
 package physicaloperator.join;
 
-import static config.PhysicalPlanConfig.INT_SIZE;
-import static config.PhysicalPlanConfig.PAGE_SIZE;
+import static utils.DBConstants.INT_SIZE;
+import static utils.DBConstants.TABLE_PAGE_SIZE;
 
 import config.PhysicalPlanConfig;
 import java.util.ArrayList;
@@ -68,7 +68,7 @@ public class BlockNestedLoopJoinOperator extends PhysicalOperator {
     }
 
     // Initialize buffer
-    tuplesPerBlock = JoinBufferPages * PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
+    tuplesPerBlock = JoinBufferPages * TABLE_PAGE_SIZE / (this.outputSchema.size() * INT_SIZE);
     outerBlockBuffer = new Tuple[tuplesPerBlock];
 
     loadNextBlock();

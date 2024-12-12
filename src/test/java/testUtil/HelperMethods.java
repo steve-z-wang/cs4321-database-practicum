@@ -5,7 +5,9 @@ import io.reader.HumanReadableTupleReader;
 import io.writer.BinaryTupleWriter;
 import io.writer.HumanReadableTupleWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -72,16 +74,16 @@ public class HelperMethods {
   }
 
   public static List<Tuple> readBinary(String filePath) throws IOException {
-    BinaryTupleReader reader = new BinaryTupleReader(filePath);
+    FileChannel channel = new FileInputStream(filePath).getChannel();
+    BinaryTupleReader reader = new BinaryTupleReader(channel);
     List<Tuple> tuples = reader.getAllTuples();
-    reader.close();
+    channel.close();
     return tuples;
   }
 
   public static List<Tuple> readHumanReadable(String filePath) throws IOException {
     HumanReadableTupleReader reader = new HumanReadableTupleReader(filePath);
     List<Tuple> tuples = reader.getAllTuples();
-    reader.close();
     return tuples;
   }
 

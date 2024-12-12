@@ -26,7 +26,7 @@ public class BasicQueryTestSmall extends QueryTestBase {
   @BeforeAll
   void setUpSmallEnvironment() throws JSQLParserException, IOException, URISyntaxException {
     logger.info("Setting up small database environment");
-    setupEnvironment("integration_test_samples/small");
+    setupEnvironment("integration_test_samples/p1_small_query_test");
     configureJoinAndSortMethods();
 
     // Generate binary input files

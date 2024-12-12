@@ -39,15 +39,6 @@ public class HumanReadableTupleReader extends TupleReader {
   }
 
   @Override
-  public void close() {
-    try {
-      this.reader.close();
-    } catch (IOException e) {
-      logger.error("Error closing HumanReadableTupleReader: ", e);
-    }
-  }
-
-  @Override
   public void reset() {
     try {
       this.reader.close();

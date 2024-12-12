@@ -76,7 +76,11 @@ public class DBCatalog {
    * @return file where table is found on disk
    */
   public File getFileForTable(String tableName) {
-    return new File(dbDirectory + "/data/" + tableName);
+    return new File(getTablePath(tableName));
+  }
+
+  public String getTablePath(String tableName) {
+    return dbDirectory + "/data/" + tableName;
   }
 
   public ArrayList<Column> getSchemaForTable(String tableName) {

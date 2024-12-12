@@ -13,6 +13,7 @@ import net.sf.jsqlparser.JSQLParserException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -25,7 +26,7 @@ public class BasicQueryTestLarge extends QueryTestBase {
   @BeforeAll
   void setupLargeEnvironment() throws JSQLParserException, IOException, URISyntaxException {
     logger.info("Setting up large database environment");
-    setupEnvironment("integration_test_samples/large");
+    setupEnvironment("integration_test_samples/p2_large_query_test");
     configureJoinAndSortMethods();
   }
 
@@ -43,6 +44,11 @@ public class BasicQueryTestLarge extends QueryTestBase {
 
   private static IntStream queryIndices() {
     return IntStream.range(0, statementList.size());
+  }
+
+  @Test
+  void runSingleQuery() throws ExecutionControl.NotImplementedException, IOException {
+    runTestByIndex(7);
   }
 
   @Override

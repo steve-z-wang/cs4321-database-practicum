@@ -1,9 +1,8 @@
 package io.reader;
 
-import static config.PhysicalPlanConfig.INT_SIZE;
+import static utils.DBConstants.INT_SIZE;
+import static utils.DBConstants.TABLE_PAGE_SIZE;
 
-import config.PhysicalPlanConfig;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -20,128 +19,143 @@ public class BinaryTupleReader extends TupleReader {
 
   private static final Logger logger = LogManager.getLogger(BinaryTupleReader.class);
 
-  private static final int DEFAULT_PAGE_SIZE = PhysicalPlanConfig.PAGE_SIZE;
-  private int TUPLE_SIZE;
+  private int tupleSize;
+  private int tuplesPerPage;
+  private int tuplesInCurrentPage; // number of tuples in the current page
+  private boolean isEmptyPage;
+  private boolean isLastPage;
 
   private FileChannel fileChannel = null;
   private final ByteBuffer buffer;
-  private int remainingTuples;
-  private int bufferIndex;
+  private int currentPageNumber;
+  private int currentTupleNumber;
 
-  public BinaryTupleReader(FileChannel fileChannel) {
-    this(fileChannel, DEFAULT_PAGE_SIZE);
-  }
+  private Tuple nextTuple;
 
-  public BinaryTupleReader(FileChannel fileChannel, int BytesPerPage) {
+  public BinaryTupleReader(FileChannel fileChannel) throws IOException {
+    logger.info("Creating BinaryTupleReader");
+
     this.fileChannel = fileChannel;
-    this.buffer = ByteBuffer.allocate(BytesPerPage);
-    readPage();
+    this.buffer = ByteBuffer.allocate(TABLE_PAGE_SIZE);
+    seek(0, 0);
   }
 
-  // for backward compatibility
-  public BinaryTupleReader(String filePath) {
-    this(filePath, DEFAULT_PAGE_SIZE);
-  }
+  private void loadPage(int pageNumber) throws IOException {
+    this.fileChannel.position((long) pageNumber * TABLE_PAGE_SIZE);
 
-  // for backward compatibility
-  public BinaryTupleReader(String filePath, int pageSize) {
-    try {
-      this.fileChannel = new FileInputStream(filePath).getChannel();
-    } catch (IOException e) {
-      logger.error("Error creating BinaryTupleReader: ", e);
-    }
-
-    this.buffer = ByteBuffer.allocate(pageSize);
-    readPage();
-  }
-
-  /**
-   * Read a page from the file
-   *
-   * @return true if there is a page to read, false otherwise
-   */
-  private boolean readPage() {
     buffer.clear();
+    int bytesRead = this.fileChannel.read(this.buffer);
 
-    try {
-      int bytesRead = this.fileChannel.read(this.buffer);
-      if (bytesRead == -1) {
-        return false;
-      }
-    } catch (IOException e) {
-      logger.error("Error reading page: ", e);
-      return false;
+    // if the buffer is empty, then we have reached the end of the file
+    this.isEmptyPage = false;
+    if (bytesRead == -1) {
+      this.isEmptyPage = true;
+      return;
     }
 
     buffer.flip();
 
-    this.TUPLE_SIZE = this.buffer.getInt(0);
-    this.remainingTuples = this.buffer.getInt(INT_SIZE);
-    this.bufferIndex = 2 * INT_SIZE;
-    return true;
+    this.tupleSize = this.buffer.getInt(0);
+    this.tuplesInCurrentPage = this.buffer.getInt(INT_SIZE);
+    this.tuplesPerPage = (TABLE_PAGE_SIZE - 2 * INT_SIZE) / (INT_SIZE * this.tupleSize);
+
+    this.isLastPage = false;
+    if (this.tuplesInCurrentPage < this.tuplesPerPage) {
+      this.isLastPage = true;
+    }
   }
 
-  @Override
-  public Tuple getNextTuple() {
-    if (remainingTuples <= 0) {
-      if (!readPage()) {
-        return null;
-      }
-    }
+  private Tuple readTuple(int tupleNumber) {
 
     // read the tuple data
-    ArrayList<Integer> tupleData = new ArrayList<>();
-    for (int i = 0; i < this.TUPLE_SIZE; i++) {
-      tupleData.add(buffer.getInt(this.bufferIndex));
+    ArrayList<Integer> integers = new ArrayList<>();
+
+    int headerSize = 2 * INT_SIZE;
+    int bufferIndex = headerSize + tupleNumber * this.tupleSize * INT_SIZE;
+
+    // Add bounds checking
+    if (bufferIndex + (this.tupleSize * INT_SIZE) > buffer.capacity()) {
+      throw new IllegalStateException("Attempting to read beyond buffer capacity");
+    }
+
+    for (int i = 0; i < this.tupleSize; i++) {
+      integers.add(buffer.getInt(bufferIndex));
       bufferIndex += INT_SIZE;
     }
-
-    remainingTuples--;
-    return new Tuple(tupleData);
+    return new Tuple(integers);
   }
 
   @Override
-  public void reset() {
-    try {
-      this.fileChannel.position(0);
-    } catch (IOException e) {
-      logger.error("Error resetting BinaryTupleReader: ", e);
+  public Tuple getNextTuple() throws IOException {
+    if (this.nextTuple == null) {
+      return null;
     }
-    readPage();
+
+    Tuple toReturn = this.nextTuple;
+
+    // if we have already read all the tuples in the current page, then load the next page
+    int nextTupleNumber = this.currentTupleNumber + 1;
+    if (nextTupleNumber >= this.tuplesInCurrentPage) {
+
+      // if we have already reach the last page, then there are no more tuples
+      if (isLastPage) {
+        this.nextTuple = null;
+        return toReturn;
+      }
+
+      loadPage(++this.currentPageNumber);
+
+      this.currentTupleNumber = 0;
+      this.nextTuple = readTuple(this.currentTupleNumber);
+    } else {
+
+      this.nextTuple = readTuple(++currentTupleNumber);
+    }
+
+    return toReturn;
+  }
+
+  /**
+   * Seek to a specific tuple in the file
+   *
+   * @param pageNumber the page number
+   * @param tupleNumber the tuple number
+   */
+  public void seek(int pageNumber, int tupleNumber) throws IOException {
+    loadPage(pageNumber);
+    this.currentPageNumber = pageNumber;
+    this.currentTupleNumber = tupleNumber;
+
+    if (isEmptyPage) {
+      this.nextTuple = null;
+      return;
+    }
+
+    this.nextTuple = readTuple(tupleNumber);
   }
 
   @Override
-  public void reset(int index) {
-
-    // calculate the page number and the offset within the page
-    int pageSize = this.buffer.capacity();
-    int tuplesPerPage = (pageSize - 2 * INT_SIZE) / (INT_SIZE * this.TUPLE_SIZE);
-    int pageNumber = index / tuplesPerPage;
-    int offset = index % tuplesPerPage;
-
-    // suppose index is 4 and tuplesPerPage is 2
-    // pageNumber = 4 / 2 = 2,
-    // offset = 4 % 2 = 0
-
-    try {
-      this.fileChannel.position((long) pageNumber * pageSize);
-    } catch (IOException e) {
-      logger.error("Error resetting BinaryTupleReader: ", e);
-    }
-
-    readPage();
-
-    // skip the tuples before the desired tuple
-    this.remainingTuples -= offset;
-    this.bufferIndex += offset * INT_SIZE * this.TUPLE_SIZE;
+  public void reset() throws IOException {
+    seek(0, 0);
   }
 
-  @Override
-  public void close() {
-    try {
-      this.fileChannel.close();
-    } catch (IOException e) {
-      logger.error("Error closing BinaryTupleReader: ", e);
-    }
+  // @Override
+  public void reset(int index) throws IOException {
+    currentPageNumber = index / tuplesPerPage;
+    currentTupleNumber = index % tuplesPerPage;
+
+    seek(currentPageNumber, currentTupleNumber);
+  }
+
+  public int getCurrentPageNumber() {
+    return currentPageNumber;
+  }
+
+  public int getCurrentTupleNumber() {
+    return currentTupleNumber;
+  }
+
+  public FileChannel getFileChannel() {
+    return fileChannel;
   }
 }

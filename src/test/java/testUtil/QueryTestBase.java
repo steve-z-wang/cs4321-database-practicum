@@ -2,7 +2,6 @@ package testUtil;
 
 import static testUtil.HelperMethods.*;
 
-import builder.QueryPlanBuilder;
 import config.DBCatalog;
 import config.PhysicalPlanConfig;
 import io.cache.CacheFileManagerRegistry;
@@ -22,6 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import physicaloperator.PhysicalOperator;
+import queryplan.QueryPlanBuilder;
 
 public abstract class QueryTestBase {
   private static final Logger logger = LogManager.getLogger(QueryTestBase.class);
@@ -64,12 +64,15 @@ public abstract class QueryTestBase {
   protected void runTestByIndex(int index)
       throws ExecutionControl.NotImplementedException, IOException {
     // Run the query
+    logger.info("Running test for query {}", index + 1);
     List<Tuple> tuples = runQueryByIndex(index);
 
     // Get the expected results
+    logger.info("Getting expected results for query {}", index + 1);
     List<Tuple> expectedTuples = getExpectedResult(index);
 
     // Verify results
+    logger.info("Verifying results for query {}", index + 1);
     verifyQueryResults(expectedTuples, tuples);
   }
 

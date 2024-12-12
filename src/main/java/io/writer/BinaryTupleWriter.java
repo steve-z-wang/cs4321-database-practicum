@@ -1,7 +1,7 @@
 package io.writer;
 
-import static config.PhysicalPlanConfig.INT_SIZE;
-import static config.PhysicalPlanConfig.PAGE_SIZE;
+import static utils.DBConstants.INT_SIZE;
+import static utils.DBConstants.TABLE_PAGE_SIZE;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,9 +29,9 @@ public class BinaryTupleWriter extends TupleWriter {
   // Primary constructor that handles all initialization
   public BinaryTupleWriter(FileChannel fileChannel, int tupleSize) {
     this.TUPLE_SIZE = tupleSize;
-    this.MAX_TUPLE_COUNT_PER_PAGE = (PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
+    this.MAX_TUPLE_COUNT_PER_PAGE = (TABLE_PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
     this.fileChannel = fileChannel;
-    this.buffer = ByteBuffer.allocate(PAGE_SIZE);
+    this.buffer = ByteBuffer.allocate(TABLE_PAGE_SIZE);
     this.bufferIndex = 2 * INT_SIZE;
     this.tupleCount = 0;
   }
@@ -40,7 +40,7 @@ public class BinaryTupleWriter extends TupleWriter {
   // TODO: migrage all to use the fileChannel object creator
   public BinaryTupleWriter(String filePath, int tupleSize) {
     this.TUPLE_SIZE = tupleSize;
-    this.MAX_TUPLE_COUNT_PER_PAGE = (PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
+    this.MAX_TUPLE_COUNT_PER_PAGE = (TABLE_PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
 
     try {
       Path path = Paths.get(filePath);
@@ -50,7 +50,7 @@ public class BinaryTupleWriter extends TupleWriter {
       logger.error("Error creating BinaryTupleWriter: ", e);
     }
 
-    this.buffer = ByteBuffer.allocate(PAGE_SIZE);
+    this.buffer = ByteBuffer.allocate(TABLE_PAGE_SIZE);
 
     // start with an index
     this.bufferIndex = 2 * INT_SIZE;
@@ -80,7 +80,7 @@ public class BinaryTupleWriter extends TupleWriter {
   }
 
   private void writePage() {
-    for (; bufferIndex < PAGE_SIZE; bufferIndex += INT_SIZE) {
+    for (; bufferIndex < TABLE_PAGE_SIZE; bufferIndex += INT_SIZE) {
       buffer.putInt(bufferIndex, 0);
     }
 

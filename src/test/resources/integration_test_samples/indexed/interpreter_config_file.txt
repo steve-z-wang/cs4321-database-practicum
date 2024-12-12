@@ -1,5 +1,0 @@
-/path/to/input
-/path/to/output
-/path/to/tempdir
-1
-0

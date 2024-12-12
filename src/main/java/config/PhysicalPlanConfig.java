@@ -9,8 +9,6 @@ import org.apache.logging.log4j.Logger;
 
 public class PhysicalPlanConfig {
   private static final Logger logger = LogManager.getLogger(PhysicalPlanConfig.class);
-  public static final int INT_SIZE = 4;
-  public static int PAGE_SIZE = 4096;
   public static final int DEFAULT_BNLJ_BUFFER_PAGES = 5;
   private static final String DEFAULT_CACHE_DIR_NAME = "temp";
 
@@ -38,7 +36,7 @@ public class PhysicalPlanConfig {
     joinBufferPages = 0;
     sortBufferPages = 0;
 
-    setCacheDirectory(DEFAULT_CACHE_DIR_NAME);
+    setCacheDir(DEFAULT_CACHE_DIR_NAME);
   }
 
   public static PhysicalPlanConfig getInstance() {
@@ -53,7 +51,7 @@ public class PhysicalPlanConfig {
    *
    * @param configFile path of config file
    */
-  public void setConfigFile(String configFile) {
+  public void loadConfig(String configFile) {
     logger.info("Reading config file: {}", configFile);
     try {
       BufferedReader br = new BufferedReader(new FileReader(configFile));
@@ -128,7 +126,7 @@ public class PhysicalPlanConfig {
     this.sortBufferPages = bufferPages;
   }
 
-  public void setCacheDirectory(String cacheDirectory) {
+  public void setCacheDir(String cacheDirectory) {
     if (cacheDirectory == null || cacheDirectory.trim().isEmpty()) {
       throw new IllegalArgumentException("Cache directory cannot be null or empty");
     }
@@ -143,10 +141,6 @@ public class PhysicalPlanConfig {
 
     this.cacheDirectory = path.toString();
     logger.info("Cache directory set to: {}", this.cacheDirectory);
-  }
-
-  public void setPageSize(int pageSize) {
-    this.PAGE_SIZE = pageSize;
   }
 
   // Getters
