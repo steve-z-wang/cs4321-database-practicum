@@ -36,9 +36,12 @@ public class P3BPlusTreeTest extends QueryTestBase {
     return List.of();
 
 
+
+
     // TODO
     // Create test data set:
     //    1. generate 3 tables randomly each with 2 attribute
+    //      1.1. create random data generator
     //    2. create index config
     // Create test cases
     //    1. design 5 different test cases
