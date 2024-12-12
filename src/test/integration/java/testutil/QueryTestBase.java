@@ -2,7 +2,7 @@ package testutil;
 
 import static testutil.HelperMethods.*;
 
-import config.DBCatalog;
+import catalog.DBCatalog;
 import io.cache.CacheFileManagerRegistry;
 import java.io.File;
 import java.io.IOException;

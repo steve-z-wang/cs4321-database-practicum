@@ -34,5 +34,16 @@ public class P3BPlusTreeTest extends QueryTestBase {
   @Override
   protected List<Tuple> getExpectedResult(int index) throws IOException {
     return List.of();
+
+
+    // TODO
+    // Create test data set:
+    //    1. generate 3 tables randomly each with 2 attribute
+    //    2. create index config
+    // Create test cases
+    //    1. design 5 different test cases
+    //    2. implement the expected results without using the B+ tree index
+    //    3. run the index scan & compare the results
+
   }
 }

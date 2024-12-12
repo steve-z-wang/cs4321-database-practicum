@@ -1,6 +1,6 @@
 package index;
 
-import config.DBCatalog;
+import catalog.DBCatalog;
 import config.IndexConfigManager;
 import config.IndexDefinition;
 import io.reader.BinaryTupleReader;

@@ -1,6 +1,6 @@
 package compiler;
 
-import config.DBCatalog;
+import catalog.DBCatalog;
 import config.IndexConfigManager;
 import config.InterpreterConfig;
 import config.PhysicalPlanConfig;

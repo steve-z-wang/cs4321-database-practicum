@@ -1,6 +1,6 @@
 package physicaloperator.scan;
 
-import config.DBCatalog;
+import catalog.DBCatalog;
 import config.IndexConfigManager;
 import config.IndexDefinition;
 import index.BPlusTree;

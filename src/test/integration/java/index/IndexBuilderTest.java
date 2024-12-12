@@ -2,7 +2,7 @@ package index;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import config.DBCatalog;
+import catalog.DBCatalog;
 import config.IndexConfigManager;
 import java.io.File;
 import java.io.FileInputStream;

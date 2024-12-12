@@ -1,6 +1,8 @@
 package config;
 
 import java.util.List;
+
+import catalog.DBCatalog;
 import net.sf.jsqlparser.schema.Column;
 
 public class IndexDefinition {

@@ -1,6 +1,6 @@
 package physicaloperator.scan;
 
-import config.DBCatalog;
+import catalog.DBCatalog;
 import io.reader.BinaryTupleReader;
 import java.io.FileInputStream;
 import java.io.IOException;

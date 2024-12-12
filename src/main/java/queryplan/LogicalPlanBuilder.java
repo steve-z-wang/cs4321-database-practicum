@@ -1,6 +1,6 @@
 package queryplan;
 
-import config.DBCatalog;
+import catalog.DBCatalog;
 import java.util.ArrayList;
 import java.util.List;
 import logicaloperator.*;
