@@ -1,10 +1,7 @@
 package catalog;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-
 /** Inner class to hold statistics for a single column */
-class ColumnStats {
+public class ColumnStats {
   private int minValue;
   private int maxValue;
   private int distinctValues; // V-value as described in the project spec

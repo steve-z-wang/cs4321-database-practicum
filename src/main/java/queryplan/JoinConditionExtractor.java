@@ -17,7 +17,7 @@ import physicaloperator.QueryConditionEvaluator;
  * Class to process the WHERE clause of the SQL statement and separate join conditions from filter
  * conditions. It uses the visitor pattern to traverse and classify each comparison expression.
  */
-public class QueryConditionExtractor extends ExpressionVisitorAdapter<Void> {
+public class JoinConditionExtractor extends ExpressionVisitorAdapter<Void> {
   private final Map<String, Integer> tableOrder = new HashMap<>();
   private final Map<String, Expression> joinConditions = new HashMap<>();
   private final Map<String, Expression> filterConditions = new HashMap<>();
@@ -29,7 +29,7 @@ public class QueryConditionExtractor extends ExpressionVisitorAdapter<Void> {
    * @param fromItem the main table in the FROM clause
    * @param joins the list of JOIN clauses in the query
    */
-  public QueryConditionExtractor(FromItem fromItem, List<Join> joins) {
+  public JoinConditionExtractor(FromItem fromItem, List<Join> joins) {
     initializeTable((Table) fromItem, 0); // Initialize the main table
 
     int index = 1;

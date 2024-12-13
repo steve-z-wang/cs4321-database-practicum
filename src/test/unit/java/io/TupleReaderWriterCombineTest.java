@@ -91,7 +91,7 @@ public class TupleReaderWriterCombineTest {
 
     // create a list of tuples
     ArrayList<Tuple> tuples = new ArrayList<>();
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
       tuples.add(new Tuple(i + "," + (i + 1) + "," + (i + 2)));
     }
 

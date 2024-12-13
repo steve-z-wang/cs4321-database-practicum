@@ -99,7 +99,7 @@ public class IndexConditionExtractor extends ExpressionVisitorAdapter<Void> {
       }
     } else if (left instanceof LongValue leftNum && right instanceof Column rightColumn) {
       if (isValidIndexColumn(rightColumn)) {
-        addUpperBound((int) leftNum.getValue() - 1);
+        addUpperBound((int) leftNum.getValue() - minusRange);
       } else {
         addRemainderCondition(op);
       }

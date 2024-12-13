@@ -2,7 +2,7 @@
 
 ## Top-level Class
 
-The top-level class for running the program is `Compiler`, located in the `src/main/java/compiler` directory. This class acts as the entry point to the program, reading input queries and producing the required output.
+The top-level class for running the program is `compiler`, located in the `src/main/java/compiler` directory. This class acts as the entry point to the program, reading input queries and producing the required output.
 
 ## Join Condition Extraction Logic
 

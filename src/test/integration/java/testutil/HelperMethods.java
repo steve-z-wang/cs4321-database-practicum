@@ -36,7 +36,7 @@ public class HelperMethods {
 
     for (int i = 0; i < expected.size(); i++) {
       if (!expected.get(i).equals(actual.get(i))) {
-        return true;
+        return false;
       }
     }
     return true;

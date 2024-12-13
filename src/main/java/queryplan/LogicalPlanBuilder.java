@@ -112,7 +112,7 @@ public class LogicalPlanBuilder {
 
   private LogicalOperator applyJoins(Table mainTable, LogicalOperator operator) {
     // Process where clause
-    QueryConditionExtractor queryConditionExtractor = new QueryConditionExtractor(fromItem, joins);
+    JoinConditionExtractor queryConditionExtractor = new JoinConditionExtractor(fromItem, joins);
     where.accept(queryConditionExtractor, null);
 
     // Apply filter conditions for the main table

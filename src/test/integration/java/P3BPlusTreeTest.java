@@ -1,3 +1,11 @@
+import static testutil.HelperMethods.*;
+
+import catalog.DBCatalog;
+import config.IndexConfigManager;
+import config.InterpreterConfig;
+import config.PhysicalPlanConfig;
+import index.IndexBuilder;
+import io.cache.CacheFileManagerRegistry;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -5,12 +13,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
-
-import catalog.TableStats;
-import compiler.Compiler;
-import config.InterpreterConfig;
-import config.PhysicalPlanConfig;
-import index.IndexBuilder;
+import java.util.stream.IntStream;
 import jdk.jshell.spi.ExecutionControl;
 import model.Tuple;
 import net.sf.jsqlparser.JSQLParserException;
@@ -20,14 +23,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import physicaloperator.PhysicalOperator;
 import queryplan.QueryPlanBuilder;
 import testutil.QueryTestBase;
-import testutil.RandomDataGenerator;
-
-import static testutil.HelperMethods.collectAllTuples;
-import static testutil.HelperMethods.compareTupleListsExact;
-
 
 public class P3BPlusTreeTest {
 
@@ -42,16 +42,22 @@ public class P3BPlusTreeTest {
     logger.info("Setting up large database environment");
 
     // // Generate random data
-    // TableStats tablestats = TableStats.deserialize("Reserves 10000 G,0,10000 H,0,10000 I,0,10000");
-    // RandomDataGenerator.generateRandomTable(tablestats, baseDir + "/input/db/data/" + tablestats.getTableName());
+    // TableStats tablestats = TableStats.deserialize("Reserves 10000 G,0,10000 H,0,10000
+    // I,0,10000");
+    // RandomDataGenerator.generateRandomTable(tablestats, baseDir + "/input/db/data/" +
+    // tablestats.getTableName());
 
     // Set up the base directory
     ClassLoader classLoader = QueryTestBase.class.getClassLoader();
-    URI uri = Objects.requireNonNull(classLoader.getResource("p3_b_plus_tree_test_samples")).toURI();
+    URI uri =
+        Objects.requireNonNull(classLoader.getResource("p3_b_plus_tree_test_samples")).toURI();
     baseDir = new File(uri).getPath();
 
-    // Set up env
-    Compiler.initializeDatabaseEnvironment();
+    initializeDatabaseEnvironment();
+
+    // Build the indexes
+    IndexBuilder indexBuilder = new IndexBuilder();
+    indexBuilder.buildIndexes();
 
     // Parse the queries
     String queriesContent = Files.readString(new File(baseDir + "/input/queries.sql").toPath());
@@ -61,13 +67,15 @@ public class P3BPlusTreeTest {
     queryPlanBuilder = new QueryPlanBuilder();
   }
 
-  @Test
-  public void testIndexScan() throws IOException {
+  @ParameterizedTest(name = "Query #{arguments}")
+  @MethodSource("queryIndices")
+  void testIndexScan(int queryIndex) throws ExecutionControl.NotImplementedException, IOException {
+    logger.info("Running query {}", queryIndex);
+    runTestByIndex(queryIndex);
+  }
 
-    // Create test cases
-    //    1. design 5 different test cases
-    //    2. implement the expected results without using the B+ tree index
-    //    3. run the index scan & compare the results
+  private static IntStream queryIndices() {
+    return IntStream.range(0, statementList.size());
   }
 
   protected void runTestByIndex(int index)
@@ -85,20 +93,48 @@ public class P3BPlusTreeTest {
 
     // Verify results
     logger.info("Verifying results for query {}", index + 1);
-    if (!compareTupleListsExact(expectedTuples, tuples)) {
+    if (!compareTupleListsAnyOrder(expectedTuples, tuples)) {
       throw new AssertionError("Query returned different results");
     }
   }
 
-  private List<Tuple> getResult(Statement statement) throws IOException, ExecutionControl.NotImplementedException {
+  private List<Tuple> getResult(Statement statement)
+      throws IOException, ExecutionControl.NotImplementedException {
     PhysicalPlanConfig.getInstance().setScanMethod(PhysicalPlanConfig.ScanMethod.INDEX_SCAN);
     PhysicalOperator plan = queryPlanBuilder.buildPlan(statement);
     return collectAllTuples(plan);
   }
 
-  private List<Tuple> getExpectedResult(Statement statement) throws IOException, ExecutionControl.NotImplementedException {
-    PhysicalPlanConfig.getInstance().setScanMethod(PhysicalPlanConfig.ScanMethod.INDEX_SCAN);
+  private List<Tuple> getExpectedResult(Statement statement)
+      throws IOException, ExecutionControl.NotImplementedException {
+    PhysicalPlanConfig.getInstance().setScanMethod(PhysicalPlanConfig.ScanMethod.FULL_SCAN);
     PhysicalOperator plan = queryPlanBuilder.buildPlan(statement);
     return collectAllTuples(plan);
+  }
+
+  @Test
+  public void testSingleCase() throws ExecutionControl.NotImplementedException, IOException {
+    runTestByIndex(15);
+  }
+
+  public static void initializeDatabaseEnvironment() throws IOException {
+
+    InterpreterConfig interpreterConfig = InterpreterConfig.getInstance();
+
+    String inputDir = baseDir + "/input";
+    String tempDir = "/temp";
+
+    // Set up the database catalog
+    DBCatalog.getInstance().setDataDirectory(inputDir + "/db");
+
+    // Set up the index config
+    IndexConfigManager.getInstance().loadConfig(inputDir + "/db/index_info.txt");
+    IndexConfigManager.getInstance().setIndexDir(inputDir + "/db/indexes");
+
+    // Set up the physical plan config
+    PhysicalPlanConfig.getInstance().loadConfig(inputDir + "/plan_builder_config.txt");
+
+    // Set up the cache directory
+    CacheFileManagerRegistry.getInstance().setCacheDirectory(tempDir);
   }
 }

@@ -1,3 +1,9 @@
+import catalog.DBCatalog;
+import config.IndexConfigManager;
+import config.InterpreterConfig;
+import config.PhysicalPlanConfig;
+import index.IndexBuilder;
+import io.cache.CacheFileManagerRegistry;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -6,34 +12,22 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
-
-import catalog.DBCatalog;
-import config.IndexConfigManager;
-import config.InterpreterConfig;
-import config.PhysicalPlanConfig;
-import index.IndexBuilder;
-import io.cache.CacheFileManagerRegistry;
 import jdk.jshell.spi.ExecutionControl;
-import model.Tuple;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import physicaloperator.PhysicalOperator;
 import queryplan.QueryPlanBuilder;
 import testutil.QueryTestBase;
 
-import static testutil.HelperMethods.*;
+public class IndexScanPerformanceTest {
 
-
-public class P3BPlusTreeTest {
-
-  private static Logger logger = LogManager.getLogger(P3BPlusTreeTest.class);
+  private static Logger logger = LogManager.getLogger(IndexScanPerformanceTest.class);
 
   static String baseDir;
   static List<Statement> statementList;
@@ -44,12 +38,16 @@ public class P3BPlusTreeTest {
     logger.info("Setting up large database environment");
 
     // // Generate random data
-    // TableStats tablestats = TableStats.deserialize("Reserves 10000 G,0,10000 H,0,10000 I,0,10000");
-    // RandomDataGenerator.generateRandomTable(tablestats, baseDir + "/input/db/data/" + tablestats.getTableName());
+    // TableStats tablestats = TableStats.deserialize("Reserves 10000 G,0,10000 H,0,10000
+    // I,0,10000");
+    // RandomDataGenerator.generateRandomTable(tablestats, baseDir + "/input/db/data/" +
+    // tablestats.getTableName());
 
     // Set up the base directory
     ClassLoader classLoader = QueryTestBase.class.getClassLoader();
-    URI uri = Objects.requireNonNull(classLoader.getResource("p3_b_plus_tree_test_samples")).toURI();
+    URI uri =
+        Objects.requireNonNull(classLoader.getResource("p3_index_scan_performance_test_samples"))
+            .toURI();
     baseDir = new File(uri).getPath();
 
     initializeDatabaseEnvironment();
@@ -66,15 +64,18 @@ public class P3BPlusTreeTest {
     queryPlanBuilder = new QueryPlanBuilder();
   }
 
-  @ParameterizedTest(name = "Query #{arguments}")
+  @ParameterizedTest(name = "Full scan query #{0}")
   @MethodSource("queryIndices")
-  void testIndexScan(int queryIndex) throws ExecutionControl.NotImplementedException, IOException {
-    logger.info("Running query {}", queryIndex);
+  void testFullScan(int queryIndex) throws ExecutionControl.NotImplementedException, IOException {
+    PhysicalPlanConfig.getInstance().setScanMethod(PhysicalPlanConfig.ScanMethod.FULL_SCAN);
     runTestByIndex(queryIndex);
   }
 
-  private static IntStream queryIndices() {
-    return IntStream.range(0, statementList.size());
+  @ParameterizedTest(name = "Index scan query #{0}")
+  @MethodSource("queryIndices")
+  void testIndexScan(int queryIndex) throws ExecutionControl.NotImplementedException, IOException {
+    PhysicalPlanConfig.getInstance().setScanMethod(PhysicalPlanConfig.ScanMethod.INDEX_SCAN);
+    runTestByIndex(queryIndex);
   }
 
   protected void runTestByIndex(int index)
@@ -84,34 +85,19 @@ public class P3BPlusTreeTest {
     // get the statement
     Statement statement = statementList.get(index);
 
-    // Get the results
-    List<Tuple> tuples = getResult(statement);
+    long startTime = System.currentTimeMillis();
 
-    // Get the expected results
-    List<Tuple> expectedTuples = getExpectedResult(statement);
-
-    // Verify results
-    logger.info("Verifying results for query {}", index + 1);
-    if (!compareTupleListsAnyOrder(expectedTuples, tuples)) {
-      throw new AssertionError("Query returned different results");
-    }
-  }
-
-  private List<Tuple> getResult(Statement statement) throws IOException, ExecutionControl.NotImplementedException {
-    PhysicalPlanConfig.getInstance().setScanMethod(PhysicalPlanConfig.ScanMethod.INDEX_SCAN);
     PhysicalOperator plan = queryPlanBuilder.buildPlan(statement);
-    return collectAllTuples(plan);
+    while (plan.getNextTuple() != null) {}
+
+    long endTime = System.currentTimeMillis();
+    long duration = endTime - startTime;
+
+    logger.info("Query {} took {} milliseconds", index + 1, duration);
   }
 
-  private List<Tuple> getExpectedResult(Statement statement) throws IOException, ExecutionControl.NotImplementedException {
-    PhysicalPlanConfig.getInstance().setScanMethod(PhysicalPlanConfig.ScanMethod.FULL_SCAN);
-    PhysicalOperator plan = queryPlanBuilder.buildPlan(statement);
-    return collectAllTuples(plan);
-  }
-
-  @Test
-  public void testSingleCase() throws ExecutionControl.NotImplementedException, IOException {
-    runTestByIndex(15);
+  private static IntStream queryIndices() {
+    return IntStream.range(0, statementList.size());
   }
 
   public static void initializeDatabaseEnvironment() throws IOException {

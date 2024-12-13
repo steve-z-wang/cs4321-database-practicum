@@ -42,7 +42,6 @@ public class IndexScanOperator extends PhysicalOperator {
   private BPlusTreeLeafNode currentleafNode;
   private int currentEntryIndex;
   private int currentRecorIndex;
-  private Tuple nextTuple;
 
   // for checking the range
   private int attributeIndex;
@@ -50,6 +49,7 @@ public class IndexScanOperator extends PhysicalOperator {
   // for table scan
   private FileChannel tableChannel; // table file channel
   private BinaryTupleReader tupleReader; // tuple reader for table
+  private Tuple nextTuple;
 
   /**
    * The scan operator will return only the tuple with attribute values that are within the range of
@@ -58,6 +58,8 @@ public class IndexScanOperator extends PhysicalOperator {
   public IndexScanOperator(
       Table table, IndexDefinition indexDefinition, Integer lowKey, Integer highKey) {
     super(null);
+
+    logger.info("Creating IndexScanOperator for table: {}", table.getName());
 
     // create output schema with table reference
     initializeSchema(table);
@@ -68,15 +70,22 @@ public class IndexScanOperator extends PhysicalOperator {
     // create tuple reader for table
     initializeTupleReader(table);
 
-    // init index scan
-    initializeIndexReader(indexDefinition, lowKey);
+    // create index reader
+    initializeIndexReader(indexDefinition);
 
-    // read the first tuple
-    positionReaderAtRecord();
-    try {
-      nextTuple = tupleReader.getNextTuple();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    initializeIndexStart(indexDefinition, lowKey);
+
+    if (startLeafAddress == -1) {
+      nextTuple = null;
+    } else {
+      try {
+        currentEntryIndex = startEntryIndex;
+        currentRecorIndex = 0;
+        positionReaderAtRecord();
+        nextTuple = getNextValidTuple();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     // select the appropriate getNextTuple and reset methods
@@ -96,9 +105,41 @@ public class IndexScanOperator extends PhysicalOperator {
     }
   }
 
-  private void initializeIndexReader(IndexDefinition indexDefinition, Integer lowKey) {
+  private boolean initializeIndexStart(IndexDefinition indexDefinition, Integer lowKey) {
     try {
-      // create buffer for index page
+
+      // init index traversal
+      if (lowKey == null) {
+        currentleafNode = bPlusTree.getFirstLeafNode(indexChannel, indexPageBuffer);
+        startEntryIndex = 0;
+      } else {
+        currentleafNode = bPlusTree.findLeafNodeByKey(indexChannel, indexPageBuffer, lowKey);
+        startEntryIndex = currentleafNode.findEntryIndexByKey(lowKey);
+
+        // if we run out of entries in the current leaf node, move to the next leaf node & reset
+        // entry
+        if (startEntryIndex >= currentleafNode.getNumOfKeys()) {
+          currentleafNode =
+              bPlusTree.getNextLeafNode(indexChannel, indexPageBuffer, currentleafNode);
+
+          // if we run out of leaf nodes, we have no valid start index
+          if (currentleafNode == null) {
+            startLeafAddress = -1;
+            return false;
+          }
+          startEntryIndex = 0;
+        }
+      }
+      startLeafAddress = currentleafNode.getAddress();
+      return true;
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void initializeIndexReader(IndexDefinition indexDefinition) {
+    try {
       indexPageBuffer = ByteBuffer.allocate(DBConstants.INDEX_PAGE_SIZE);
 
       // get index file
@@ -107,23 +148,8 @@ public class IndexScanOperator extends PhysicalOperator {
 
       // deserialize the tree
       bPlusTree = BPlusTree.deserialize(indexChannel, indexPageBuffer);
-
-      // init index traversal
-      if (lowKey == null) {
-        currentleafNode = bPlusTree.getFirstLeafNode(indexChannel, indexPageBuffer);
-        currentEntryIndex = 0;
-        currentRecorIndex = 0;
-      } else {
-        currentleafNode = bPlusTree.findLeafNodeByKey(indexChannel, indexPageBuffer, lowKey);
-        currentEntryIndex = currentleafNode.getAddress();
-        currentRecorIndex = currentleafNode.findEntryIndexByKey(lowKey);
-      }
-
-      // for index reset
-      startLeafAddress = startEntryIndex;
-      startEntryIndex = 0;
-
     } catch (IOException e) {
+      logger.error("Error creating Index file reader: ", e);
       throw new RuntimeException(e);
     }
   }
@@ -160,21 +186,34 @@ public class IndexScanOperator extends PhysicalOperator {
   }
 
   private Void resetWithClusteredIndex() {
-    positionReaderAtRecord();
+    if (startLeafAddress == -1) {
+      return null;
+    }
+    try {
+      currentEntryIndex = startEntryIndex;
+      currentRecorIndex = 0;
+      positionReaderAtRecord();
+      nextTuple = getNextValidTuple();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return null;
   }
 
   private Void resetWithNonClusteredIndex() {
-
+    if (startLeafAddress == -1) {
+      return null;
+    }
     try {
       currentleafNode = bPlusTree.loadLeafNode(indexChannel, indexPageBuffer, startLeafAddress);
       currentEntryIndex = startEntryIndex;
       currentRecorIndex = 0;
+      positionReaderAtRecord();
+      nextTuple = getNextValidTuple();
     } catch (IOException e) {
       logger.error("Error resetting index scan: ", e);
       throw new RuntimeException(e);
     }
-
     return null;
   }
 
@@ -190,6 +229,7 @@ public class IndexScanOperator extends PhysicalOperator {
     }
 
     Tuple toReturn = nextTuple;
+    nextTuple = null;
 
     // read the next tuple
     try {
@@ -202,11 +242,13 @@ public class IndexScanOperator extends PhysicalOperator {
   }
 
   private Tuple getNextTupleWithNonClusteredIndex() {
+
     if (nextTuple == null) {
       return null;
     }
 
     Tuple toReturn = nextTuple;
+    nextTuple = null;
 
     // read the next tuple
     try {
@@ -230,10 +272,11 @@ public class IndexScanOperator extends PhysicalOperator {
   }
 
   private boolean advanceIndexPosition() throws IOException {
-    // find the next tuple
-    RecordEntry currentEntry = currentleafNode.getEntryAtIndex(currentEntryIndex);
+    // increment the record index
+    currentRecorIndex++;
 
     // if we run out of records in the current entry, move to the next entry & reset record index
+    RecordEntry currentEntry = currentleafNode.getEntryAtIndex(currentEntryIndex);
     if (currentRecorIndex >= currentEntry.getNumOfRecordIds()) {
       currentEntryIndex++;
       currentRecorIndex = 0;
@@ -244,6 +287,7 @@ public class IndexScanOperator extends PhysicalOperator {
     if (currentEntryIndex >= currentleafNode.getNumOfKeys()) {
       currentleafNode = bPlusTree.getNextLeafNode(indexChannel, indexPageBuffer, currentleafNode);
       currentEntryIndex = 0;
+      currentRecorIndex = 0;
     }
 
     return currentleafNode != null;
@@ -266,6 +310,7 @@ public class IndexScanOperator extends PhysicalOperator {
   public void close() {
     try {
       tableChannel.close();
+      indexChannel.close();
     } catch (IOException e) {
       logger.error("Error closing table channel: ", e);
     }

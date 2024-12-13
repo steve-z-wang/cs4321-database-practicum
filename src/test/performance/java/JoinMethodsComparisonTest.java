@@ -1,5 +1,3 @@
-package physicaloperator.join;
-
 import static testutil.HelperMethods.convertToBinaryFiles;
 
 import config.PhysicalPlanConfig.JoinMethod;
@@ -34,7 +32,9 @@ public class JoinMethodsComparisonTest extends QueryTestBase {
     logger.info("Setting up join methods comparison environment");
     setupEnvironment("performance_test_samples");
 
-    convertToBinaryFiles(baseDir + "/input/db/data_humanreadable", baseDir + "/input/db/data");
+    convertToBinaryFiles(
+        baseDir + "/p2_join_methods_comparision_test_samples/input/db/data_humanreadable",
+        baseDir + "/p2_join_methods_comparision_test_samples/input/db/data");
   }
 
   void configureJoinAndSortMethods(JoinMethod joinMethod, int bufferPages) {

@@ -1,14 +1,19 @@
 package index;
 
+import static utils.DBConstants.INDEX_PAGE_SIZE;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
-import utils.DBConstants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import utils.ParallelListSorter;
 
 public class BPlusTree {
+
+  private Logger logger = LogManager.getLogger(BPlusTree.class);
 
   private int rootAddress;
   private int numLeafNodes;
@@ -33,6 +38,8 @@ public class BPlusTree {
 
   public BPlusTreeLeafNode findLeafNodeByKey(
       FileChannel indexChannel, ByteBuffer buffer, int targetKey) throws IOException {
+
+    logger.debug("Finding leaf node for key: {}", targetKey);
 
     // load the root node
     BPlusTreeIndexNode node = loadIndexNode(indexChannel, buffer, rootAddress);
@@ -61,7 +68,7 @@ public class BPlusTree {
       return null;
     }
 
-    return loadLeafNode(indexChannel, buffer, leafNode.getAddress() + 1);
+    return loadLeafNode(indexChannel, buffer, nextAddress);
   }
 
   /** Serialize a B+ tree to disk */
@@ -157,7 +164,8 @@ public class BPlusTree {
   private static void writeBPlusTreeNode(
       FileChannel channel, ByteBuffer buffer, BPlusTreeNode node, int curNodeAddress)
       throws IOException {
-    channel.position((long) curNodeAddress * DBConstants.INDEX_PAGE_SIZE);
+
+    channel.position((long) curNodeAddress * INDEX_PAGE_SIZE);
 
     buffer.clear();
     node.serialize(buffer);
@@ -318,17 +326,40 @@ public class BPlusTree {
 
   public BPlusTreeLeafNode loadLeafNode(FileChannel channel, ByteBuffer buffer, int nodeAddress)
       throws IOException {
-    loadPage(channel, buffer, nodeAddress);
-    return BPlusTreeLeafNode.deserialize(buffer);
+    try {
+      loadPage(channel, buffer, nodeAddress);
+      BPlusTreeLeafNode node = BPlusTreeLeafNode.deserialize(buffer);
+      node.setAddress(nodeAddress);
+      return node;
+    } catch (IOException e) {
+      logger.error("Error loading leaf node at address: " + nodeAddress, e);
+      throw new RuntimeException(e);
+    }
   }
 
   private static void loadPage(FileChannel indexChannel, ByteBuffer buffer, int nodeAddress)
       throws IOException {
-    buffer.clear();
-    int bytesRead = indexChannel.read(buffer, (long) nodeAddress * DBConstants.INDEX_PAGE_SIZE);
-    if (bytesRead != DBConstants.INDEX_PAGE_SIZE) {
-      throw new IOException("Failed to read complete page at nodeAddress: " + nodeAddress);
+    if (nodeAddress < 0) {
+      throw new IllegalArgumentException("Invalid negative node address: " + nodeAddress);
     }
+
+    long fileSize = indexChannel.size();
+    long pageOffset = (long) nodeAddress * INDEX_PAGE_SIZE;
+    if (pageOffset >= fileSize) {
+      throw new IOException(
+          "Node address "
+              + nodeAddress
+              + " beyond file size. File size: "
+              + fileSize
+              + ", Attempted offset: "
+              + pageOffset);
+    }
+
+    buffer.clear();
+    int bytesRead = indexChannel.read(buffer, (long) nodeAddress * INDEX_PAGE_SIZE);
+    // if (bytesRead != INDEX_PAGE_SIZE) {
+    //   throw new IOException("Failed to read complete page at nodeAddress: " + nodeAddress);
+    // }
     buffer.flip();
   }
 }

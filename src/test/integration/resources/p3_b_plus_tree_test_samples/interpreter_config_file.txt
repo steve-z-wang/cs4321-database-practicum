@@ -1,5 +1,5 @@
-/input
-/output
+./src/test/integration/resources/p3_b_plus_tree_test_samples/input
+./src/test/integration/resources/p3_b_plus_tree_test_samples/output
 /tempdir
 1
-0
+1

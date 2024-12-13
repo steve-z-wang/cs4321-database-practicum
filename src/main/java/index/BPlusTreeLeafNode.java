@@ -27,6 +27,7 @@ public class BPlusTreeLeafNode extends BPlusTreeNode {
     while (i < entries.size() && targetKey > entries.get(i).getKey()) {
       i++;
     }
+
     return i;
   }
 

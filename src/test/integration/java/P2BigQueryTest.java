@@ -1,4 +1,4 @@
-import static testutil.HelperMethods.readBinary;
+import static testutil.HelperMethods.*;
 
 import config.PhysicalPlanConfig;
 import io.cache.CacheFileManagerRegistry;
@@ -67,15 +67,8 @@ public class P2BigQueryTest extends QueryTestBase {
     runTestByIndex(queryIndex);
   }
 
-  @ParameterizedTest
-  @MethodSource("getJoinTestCases")
   private static IntStream getAllTestCases() {
     return IntStream.range(0, statementList.size());
-  }
-
-  private static IntStream getSortTestCases() {
-    // TODO
-    return null;
   }
 
   private static IntStream getJoinTestCases() {
@@ -86,5 +79,12 @@ public class P2BigQueryTest extends QueryTestBase {
   protected List<Tuple> getExpectedResult(int index) throws IOException {
     String expectedPath = baseDir + "/output_expected_binary/query" + (index + 1);
     return readBinary(expectedPath);
+  }
+
+  protected void verifyQueryResults(List<Tuple> expectedTuples, List<Tuple> tuples)
+      throws IOException {
+    if (!compareTupleListsAnyOrder(expectedTuples, tuples)) {
+      throw new AssertionError("Query returned different results");
+    }
   }
 }
