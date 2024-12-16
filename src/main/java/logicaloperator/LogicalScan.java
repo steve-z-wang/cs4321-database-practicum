@@ -1,8 +1,7 @@
 package logicaloperator;
 
-import net.sf.jsqlparser.schema.Table;
-
 import java.util.List;
+import net.sf.jsqlparser.schema.Table;
 
 public class LogicalScan extends LogicalOperator {
   private final Table table;

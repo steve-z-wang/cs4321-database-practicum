@@ -83,7 +83,6 @@ public class ExternalSortOperator extends PhysicalOperator {
     return sb.toString();
   }
 
-
   public String sort() {
     List<String> runFiles = createInitialRuns();
 
@@ -241,8 +240,6 @@ public class ExternalSortOperator extends PhysicalOperator {
     return minHeap;
   }
 }
-
-
 
 /**
  * @param reader Your object that contains the list of values

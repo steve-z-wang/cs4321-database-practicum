@@ -46,7 +46,6 @@ public class ScanOperator extends PhysicalOperator {
     return "TableScan[" + table.getName() + "]";
   }
 
-
   @Override
   public void reset() {
     try {

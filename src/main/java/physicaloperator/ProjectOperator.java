@@ -3,7 +3,6 @@ package physicaloperator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import model.Tuple;
 import net.sf.jsqlparser.schema.Column;
 
@@ -35,6 +34,7 @@ public class ProjectOperator extends PhysicalOperator {
       this.outputIndexToInputIndexMap.add(index);
     }
   }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("Project[ ");
@@ -46,7 +46,7 @@ public class ProjectOperator extends PhysicalOperator {
     }
     sb.append("]");
     List<String> subplan = List.of(childOperator.toString().split("\n"));
-    for(String s:subplan){
+    for (String s : subplan) {
       sb.append("\n");
       sb.append("-").append(s);
     }

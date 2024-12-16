@@ -2,7 +2,6 @@ package physicaloperator;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import model.Tuple;
 import net.sf.jsqlparser.expression.Expression;
 
@@ -63,7 +62,7 @@ public class SelectOperator extends PhysicalOperator {
     StringBuilder sb = new StringBuilder();
     sb.append("Select[Condition: ").append(expression).append("]");
     List<String> subplan = List.of(childOperator.toString().split("\n"));
-    for(String s:subplan){
+    for (String s : subplan) {
       sb.append("\n");
       sb.append("-").append(s);
     }

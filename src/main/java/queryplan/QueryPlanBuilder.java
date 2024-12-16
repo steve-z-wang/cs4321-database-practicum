@@ -1,14 +1,11 @@
 package queryplan;
 
 import jdk.jshell.spi.ExecutionControl;
-import logicaloperator.LogicalJoin;
 import logicaloperator.LogicalOperator;
 import net.sf.jsqlparser.statement.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import physicaloperator.PhysicalOperator;
-
-import java.util.List;
 
 /**
  * Class to translate a JSQLParser statement into a relational algebra query plan. For now only
@@ -33,22 +30,23 @@ public class QueryPlanBuilder {
   private final PhysicalPlanBuilder physicalPlanBuilder;
   private String logicalSctructure;
   private String physicalSctructure;
+
   private static String logicalToString(LogicalOperator root) {
     StringBuilder sb = new StringBuilder();
     getlogicalPlan(root, 0, sb);
     return sb.toString();
   }
+
   private static void getlogicalPlan(LogicalOperator node, int level, StringBuilder sb) {
-    if(node == null) return;
-    for(int i = 0; i <= level; i++) {
+    if (node == null) return;
+    for (int i = 0; i <= level; i++) {
       sb.append("-");
     }
     sb.append(node.toString()).append("\n");
-    for(LogicalOperator child : node.getChildren()){
-      getlogicalPlan(child, level+1, sb);
+    for (LogicalOperator child : node.getChildren()) {
+      getlogicalPlan(child, level + 1, sb);
     }
   }
-
 
   public QueryPlanBuilder() {
     this.logicalPlanBuilder = new LogicalPlanBuilder();
@@ -65,7 +63,7 @@ public class QueryPlanBuilder {
   public PhysicalOperator buildPlan(Statement stmt)
       throws ExecutionControl.NotImplementedException {
     LogicalOperator logicalPlan = logicalPlanBuilder.buildPlan(stmt);
-//    traverse the logicalPlan tree
+    //    traverse the logicalPlan tree
     String logical = logicalToString(logicalPlan);
     logger.debug("Created logical plan: {}", logical);
     this.logicalSctructure = logical;
@@ -82,6 +80,7 @@ public class QueryPlanBuilder {
   public String getLogicalSctructure() {
     return logicalSctructure;
   }
+
   public String getPhysicalSctructure() {
     return physicalSctructure;
   }

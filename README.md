@@ -78,5 +78,5 @@ src/main/java/compiler/compiler.java.
 ## How to run the code
 To run the code, you can use the following command:
 ```
-java -jar ./build/libs/db_practicum_steve_haorun-3.jar ./src/test/integration/resources/p3_b_plus_tree_test_samples/interpreter_config_file.txt
+java -jar ./build/libs/db_practicum_steve_haorun-4.jar ./build/libs/db_practicum_steve_haorun-4.jar ./src/test/integration/resources/p4_optimizer_samples/interpreter_config_file.txt
 ```

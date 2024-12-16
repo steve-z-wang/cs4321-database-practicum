@@ -30,7 +30,8 @@ public class SortMergeJoinOperator extends PhysicalOperator {
   public SortMergeJoinOperator(
       PhysicalOperator leftOperator,
       PhysicalOperator rightOperator,
-      JoinTupleComparator comparator, String joinInfo) {
+      JoinTupleComparator comparator,
+      String joinInfo) {
     super(null);
 
     logger.debug("Initializing SortMergeJoinOperator");
@@ -151,14 +152,14 @@ public class SortMergeJoinOperator extends PhysicalOperator {
     List<String> rightSubTree = List.of(leftOperator.toString().split("\n"));
     StringBuilder sb = new StringBuilder();
     sb.append(thisInfo);
-      for (String s : leftSubTree) {
-          sb.append("\n");
-          sb.append("-").append(s);
-      }
-      for (String s : rightSubTree) {
-          sb.append("\n");
-          sb.append("-").append(s);
-      }
+    for (String s : leftSubTree) {
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    for (String s : rightSubTree) {
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
     return sb.toString();
   }
 }

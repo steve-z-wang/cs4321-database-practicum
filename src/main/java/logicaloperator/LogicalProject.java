@@ -2,7 +2,6 @@ package logicaloperator;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import net.sf.jsqlparser.schema.Column;
 
 public class LogicalProject extends LogicalOperator {

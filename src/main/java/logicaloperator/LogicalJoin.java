@@ -1,8 +1,7 @@
 package logicaloperator;
 
-import net.sf.jsqlparser.expression.Expression;
-
 import java.util.List;
+import net.sf.jsqlparser.expression.Expression;
 
 public class LogicalJoin extends LogicalOperator {
 
