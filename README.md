@@ -1,4 +1,4 @@
-# Project Phase 2 Submission
+# Project Phase 3 Submission
 
 The top level class of our code is compiler.java which is in the compiler package. The file is located at 
 src/main/java/compiler/compiler.java.
