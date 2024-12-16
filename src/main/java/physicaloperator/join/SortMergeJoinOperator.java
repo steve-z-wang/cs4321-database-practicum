@@ -1,6 +1,7 @@
 package physicaloperator.join;
 
 import java.util.ArrayList;
+import java.util.List;
 import model.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,11 +25,12 @@ public class SortMergeJoinOperator extends PhysicalOperator {
   private int rightIndex;
   private int rightMark;
   private boolean isMarked;
+  private String joinInfo;
 
   public SortMergeJoinOperator(
       PhysicalOperator leftOperator,
       PhysicalOperator rightOperator,
-      JoinTupleComparator comparator) {
+      JoinTupleComparator comparator, String joinInfo) {
     super(null);
 
     logger.debug("Initializing SortMergeJoinOperator");
@@ -39,6 +41,7 @@ public class SortMergeJoinOperator extends PhysicalOperator {
 
     this.outputSchema = new ArrayList<>(leftOperator.getOutputSchema());
     this.outputSchema.addAll(rightOperator.getOutputSchema());
+    this.joinInfo = joinInfo;
 
     // Initialize state
     this.leftTuple = leftOperator.getNextTuple();
@@ -140,5 +143,22 @@ public class SortMergeJoinOperator extends PhysicalOperator {
         advanceRight();
       }
     }
+  }
+
+  public String toString() {
+    String thisInfo = this.joinInfo;
+    List<String> leftSubTree = List.of(leftOperator.toString().split("\n"));
+    List<String> rightSubTree = List.of(leftOperator.toString().split("\n"));
+    StringBuilder sb = new StringBuilder();
+    sb.append(thisInfo);
+      for (String s : leftSubTree) {
+          sb.append("\n");
+          sb.append("-").append(s);
+      }
+      for (String s : rightSubTree) {
+          sb.append("\n");
+          sb.append("-").append(s);
+      }
+    return sb.toString();
   }
 }

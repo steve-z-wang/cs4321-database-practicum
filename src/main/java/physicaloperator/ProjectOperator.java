@@ -2,6 +2,8 @@ package physicaloperator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
 import model.Tuple;
 import net.sf.jsqlparser.schema.Column;
 
@@ -32,6 +34,23 @@ public class ProjectOperator extends PhysicalOperator {
       int index = columnNameToInputIndexMap.get(key);
       this.outputIndexToInputIndexMap.add(index);
     }
+  }
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("Project[ ");
+    for (Column c : outputSchema) {
+      sb.append(c.getFullyQualifiedName(true)).append(", ");
+    }
+    if (!outputSchema.isEmpty()) {
+      sb.setLength(sb.length() - 2);
+    }
+    sb.append("]");
+    List<String> subplan = List.of(childOperator.toString().split("\n"));
+    for(String s:subplan){
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    return sb.toString();
   }
 
   @Override

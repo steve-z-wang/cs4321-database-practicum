@@ -53,4 +53,22 @@ public class InMemorySortOperator extends PhysicalOperator {
         new SortTupleComparator(this.childOperator.getOutputSchema(), this.orderByElements));
     this.curIndex = 0;
   }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("-InMomorySort[");
+    for (OrderByElement element : orderByElements) {
+      sb.append(element.getExpression().toString());
+      sb.append(", ");
+    }
+    sb.append("]");
+
+    List<String> subplan = List.of(this.childOperator.toString().split("\n"));
+
+    for (String s : subplan) {
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    return sb.toString();
+  }
 }

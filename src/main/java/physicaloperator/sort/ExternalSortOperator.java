@@ -31,6 +31,7 @@ public class ExternalSortOperator extends PhysicalOperator {
 
   private CacheFileManager cacheFileManager;
   private BinaryTupleReader resultReader = null;
+  private List<OrderByElement> orderByElements;
 
   public ExternalSortOperator(
       PhysicalOperator operator, List<OrderByElement> orderByElements, int bufferPages) {
@@ -39,6 +40,7 @@ public class ExternalSortOperator extends PhysicalOperator {
     PhysicalPlanConfig config = PhysicalPlanConfig.getInstance();
 
     this.childOperator = operator;
+    this.orderByElements = orderByElements;
 
     // the total memory that we can use at a time
     this.bufferPages = bufferPages;
@@ -62,6 +64,25 @@ public class ExternalSortOperator extends PhysicalOperator {
       logger.error("Error creating result file reader:", e);
     }
   }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("-ExternalSort[");
+    for (OrderByElement element : orderByElements) {
+      sb.append(element.getExpression().toString());
+      sb.append(", ");
+    }
+    sb.append("]");
+
+    List<String> subplan = List.of(this.childOperator.toString().split("\n"));
+
+    for (String s : subplan) {
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    return sb.toString();
+  }
+
 
   public String sort() {
     List<String> runFiles = createInitialRuns();
@@ -220,6 +241,8 @@ public class ExternalSortOperator extends PhysicalOperator {
     return minHeap;
   }
 }
+
+
 
 /**
  * @param reader Your object that contains the list of values

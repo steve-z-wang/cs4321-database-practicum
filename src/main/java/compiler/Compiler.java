@@ -8,8 +8,11 @@ import config.PhysicalPlanConfig;
 import index.IndexBuilder;
 import io.cache.CacheFileManagerRegistry;
 import io.writer.BinaryTupleWriter;
+
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -122,7 +125,15 @@ public class Compiler {
       throws ExecutionControl.NotImplementedException, IOException {
     PhysicalOperator plan = queryPlanBuilder.buildPlan(statement);
 
+    String logicalStructure = queryPlanBuilder.getLogicalSctructure();
+    String physicalStructure = queryPlanBuilder.getPhysicalSctructure();
+
+
+
     if (outputToFiles) {
+      Path logicalOutPath = Paths.get(interpreterConfig.getOutputDir()).resolve("query" + counter+"_logicalplan");
+      Path physicalOutPath = Paths.get(interpreterConfig.getOutputDir()).resolve("query" + counter+"_physicalplan");
+
       Path outfile = Paths.get(interpreterConfig.getOutputDir()).resolve("query" + counter);
       logger.info("Output file: {}", outfile);
 
@@ -134,6 +145,14 @@ public class Compiler {
       BinaryTupleWriter writer =
           new BinaryTupleWriter(outfile.toString(), plan.getOutputSchema().size());
       plan.dump(writer);
+
+      try (BufferedWriter logicalWriter = Files.newBufferedWriter(logicalOutPath, StandardCharsets.UTF_8)) {
+        logicalWriter.write(logicalStructure);
+      }
+
+      try (BufferedWriter physicalWriter = Files.newBufferedWriter(physicalOutPath, StandardCharsets.UTF_8)) {
+        physicalWriter.write(physicalStructure);
+      }
 
     } else {
       plan.dump(System.out);

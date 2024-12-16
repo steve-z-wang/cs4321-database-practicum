@@ -18,6 +18,8 @@ public abstract class PhysicalOperator {
 
   Logger logger = LogManager.getLogger(PhysicalOperator.class);
 
+  public abstract String toString();
+
   protected ArrayList<Column> outputSchema;
 
   public PhysicalOperator(ArrayList<Column> outputSchema) {

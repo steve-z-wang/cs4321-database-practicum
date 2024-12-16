@@ -4,6 +4,7 @@ import static utils.DBConstants.INT_SIZE;
 import static utils.DBConstants.TABLE_PAGE_SIZE;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 import model.Tuple;
 import net.sf.jsqlparser.expression.Expression;
@@ -57,6 +58,22 @@ public class BlockNestedLoopJoinOperator extends PhysicalOperator {
     outerBlockBuffer = new Tuple[tuplesPerBlock];
 
     loadNextBlock();
+  }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("BlockNestedLoopJoin[Condition: ").append(condition).append("]");
+    List<String> leftSubTree = List.of(outerOperator.toString().split("\n"));
+    List<String> rightSubTree = List.of(innerOperator.toString().split("\n"));
+    for (String s : leftSubTree) {
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    for (String s : rightSubTree) {
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    return sb.toString();
   }
 
   private boolean loadNextBlock() {

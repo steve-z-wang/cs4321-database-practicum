@@ -1,6 +1,7 @@
 package physicaloperator.join;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 import model.Tuple;
 import net.sf.jsqlparser.expression.Expression;
@@ -43,6 +44,22 @@ public class TupleNestedLoopJoinOperator extends PhysicalOperator {
 
     // Set first left tuple
     this.leftTuple = leftOperator.getNextTuple();
+  }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("TupleNestedLoopJoin[Condition: ").append(expression).append("]");
+    List<String> leftSubTree = List.of(leftOperator.toString().split("\n"));
+    List<String> rightSubTree = List.of(leftOperator.toString().split("\n"));
+    for (String s : leftSubTree) {
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    for (String s : rightSubTree) {
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    return sb.toString();
   }
 
   @Override

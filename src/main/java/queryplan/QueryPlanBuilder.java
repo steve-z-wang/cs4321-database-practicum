@@ -31,6 +31,8 @@ public class QueryPlanBuilder {
 
   private final LogicalPlanBuilder logicalPlanBuilder;
   private final PhysicalPlanBuilder physicalPlanBuilder;
+  private String logicalSctructure;
+  private String physicalSctructure;
   private static String logicalToString(LogicalOperator root) {
     StringBuilder sb = new StringBuilder();
     getlogicalPlan(root, 0, sb);
@@ -63,12 +65,24 @@ public class QueryPlanBuilder {
   public PhysicalOperator buildPlan(Statement stmt)
       throws ExecutionControl.NotImplementedException {
     LogicalOperator logicalPlan = logicalPlanBuilder.buildPlan(stmt);
+//    traverse the logicalPlan tree
     String logical = logicalToString(logicalPlan);
     logger.debug("Created logical plan: {}", logical);
-//    todo export data into files
+    this.logicalSctructure = logical;
     logger.info("Building physical plan for query: {}", stmt);
     logicalPlan.accept(physicalPlanBuilder);
-    logger.debug("Created physical plan: {}", physicalPlanBuilder.getPhysicalPlan());
+
+    PhysicalOperator physicalPlan = physicalPlanBuilder.getPhysicalPlan();
+    String physical = physicalPlan.toString();
+    this.physicalSctructure = physical;
+    logger.debug("Created physical plan: {}", physical);
     return physicalPlanBuilder.getPhysicalPlan();
+  }
+
+  public String getLogicalSctructure() {
+    return logicalSctructure;
+  }
+  public String getPhysicalSctructure() {
+    return physicalSctructure;
   }
 }

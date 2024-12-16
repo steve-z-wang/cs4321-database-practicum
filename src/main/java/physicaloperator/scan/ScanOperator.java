@@ -18,10 +18,13 @@ public class ScanOperator extends PhysicalOperator {
 
   private final BinaryTupleReader tupleReader;
 
+  private final Table table;
+
   public ScanOperator(Table table) {
     super(null);
 
     this.outputSchema = new ArrayList<>();
+    this.table = table;
 
     // Create a copy of the schema for the output schema
     ArrayList<Column> dbSchema = dbCatalog.getSchemaForTable(table.getName());
@@ -38,6 +41,11 @@ public class ScanOperator extends PhysicalOperator {
       throw new RuntimeException(e);
     }
   }
+
+  public String toString() {
+    return "TableScan[" + table.getName() + "]";
+  }
+
 
   @Override
   public void reset() {

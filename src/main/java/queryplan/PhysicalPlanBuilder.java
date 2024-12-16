@@ -176,7 +176,8 @@ public class PhysicalPlanBuilder implements LogicalOperatorVisitor {
             smjConditionExtractor.getLeftChildSortOrder(),
             rightSort.getOutputSchema(),
             smjConditionExtractor.getRightChildSortOrder());
+    String joinInfo = "SMJ[" + joinCondition + "]";
 
-    return new SortMergeJoinOperator(leftSort, rightSort, joinTupleComparator);
+    return new SortMergeJoinOperator(leftSort, rightSort, joinTupleComparator, joinInfo);
   }
 }

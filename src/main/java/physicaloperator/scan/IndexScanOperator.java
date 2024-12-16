@@ -55,15 +55,24 @@ public class IndexScanOperator extends PhysicalOperator {
    * The scan operator will return only the tuple with attribute values that are within the range of
    * lowKey and highKey (lowKey <= value <= highKey)
    */
+//  basic information
+
+  private Table table;
+  private String coloum;
+  private Integer lowKey;
   public IndexScanOperator(
       Table table, IndexDefinition indexDefinition, Integer lowKey, Integer highKey) {
     super(null);
+
 
     logger.info("Creating IndexScanOperator for table: {}", table.getName());
 
     // create output schema with table reference
     initializeSchema(table);
 
+    this.table = table;
+    this.coloum = indexDefinition.getAttribute();
+    this.lowKey = lowKey;
     this.highKey = highKey;
     this.attributeIndex = indexDefinition.getAttributeIndex();
 
@@ -96,6 +105,10 @@ public class IndexScanOperator extends PhysicalOperator {
       selectedGetNextTuple = this::getNextTupleWithNonClusteredIndex;
       selectedReset = this::resetWithNonClusteredIndex;
     }
+  }
+
+  public String toString() {
+    return "IndexScan[" + table.getName() + "," + coloum + "," + lowKey + "," + highKey + "]";
   }
 
   private void initializeSchema(Table table) {

@@ -2,6 +2,8 @@ package physicaloperator;
 
 import model.Tuple;
 
+import java.util.List;
+
 public class DuplicateEliminationOperator extends PhysicalOperator {
 
   private final PhysicalOperator childOperator;
@@ -12,6 +14,19 @@ public class DuplicateEliminationOperator extends PhysicalOperator {
     this.childOperator = operator;
     this.nextTuple = this.childOperator.getNextTuple();
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Distinct");
+    List<String> subplan = List.of(childOperator.toString().split("\n"));
+    for(String s:subplan){
+      sb.append("\n");
+      sb.append("-").append(s);
+    }
+    return sb.toString();
+  }
+
 
   @Override
   public void reset() {
