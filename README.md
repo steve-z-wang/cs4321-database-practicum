@@ -1,36 +1,79 @@
-# Project Phase 3 Submission
+# Project Phase 4 Submission
 
 The top level class of our code is compiler.java which is in the compiler package. The file is located at 
 src/main/java/compiler/compiler.java.
 
-## How Index Scan works 
+---
 
-### where the lowkey and highkey are set 
+## **Major Implementations**
 
-We first would extract the lowkey and highkey from the selection condition in the query when creating the physical plan. 
-The logic of this part is located in IndexConditionExtractor.java. The file is located at physicaloperator/scan/IndexConditionExtractor.java.
-I uses a visitor pattern to extract the lowkey and highkey from the selection condition.
+### **1. Selection Pushing**
+**Location**:
+- `LogicalPlanBuilder`
+- `LogicalOperatorVisitor`
 
-lowkey and highkey are set in the IndexScanOperator, the location of the code is in the physicaloperator/scan/IndexScanOperator.java file.
+**Logic**:
+- **Union-Find Data Structure**: Implemented to propagate selection conditions across equality constraints in the `WHERE` clause.
+- **Selection Pushing**:
+    - A visitor pattern (`LogicalOperatorVisitor`) traverses the `WHERE` clause and constructs a union-find structure.
+    - Constraints of the form `att1 OP value` and `att1 = att2` are processed.
+    - Derived constraints are pushed to their respective children in the logical plan tree.
+
+---
+
+### **2. Implementation Choice for Logical Selections**
+**Location**:
+- `PhysicalPlanBuilder`
+- `SelectOperator`
+
+**Logic**:
+- For each selection operator:
+    - The available access paths (index scan or table scan) are evaluated using cost estimates based on **I/O cost**.
+    - **Index Scan Cost**: Computed using reduction factors derived from `stats.txt`.
+    - **Table Scan Cost**: Based on the total pages required to read the relation.
+- The best access path with the lowest estimated cost is chosen for execution.
+
+---
+
+### **3. Join Order Optimization**
+**Location**:
+- `PhysicalPlanBuilder`
+
+**Logic**:
+- **Dynamic Programming Algorithm**:
+    - A bottom-up approach is used to generate optimal left-deep join trees.
+    - Subsets of relations are evaluated in increasing size. For each subset, the algorithm computes:
+        - The cost of the optimal plan.
+        - The corresponding join order.
+    - The cost function is based on intermediate relation sizes, approximated using **V-values** (number of distinct values for attributes).
+
+---
+
+### **4. Join Implementation Choice**
+**Location**:
+- `PhysicalPlanBuilder`
+- `physicaloperator/join`
+
+**Logic**:
+- **BNLJ (Block Nested Loop Join)** and **SMJ (Sort Merge Join)** are implemented.
+- **Selection Criteria**:
+    - **SMJ** is preferred when the join condition involves equality, and the input relations are already sorted or small enough to sort efficiently.
+    - **BNLJ** is chosen when the join condition involves cross-products or non-equality conditions.
+- **Strategy Rationale**:
+    - SMJ performs better for sorted inputs and equality joins.
+    - BNLJ is a fallback for other scenarios, ensuring correctness.
+
+---
 
 
-### where in your code the grader can see different handling of clustered vs. unclustered indexes 
 
-When we build the index file with the IndexBuilder, we would set the isClustered flag to true or false. And if the index is clustered, 
-We would sort and replace the original data file with the sorted data file. The location of the code is in the Index/IndexBuilder.java file.
+## **Notes**
+- The `stats.txt` file is generated correctly and used for cost estimation.
+- Index information and multiple access paths are handled properly.
+- Dynamic programming ensures optimal join order selection based on intermediate relation sizes.
 
-In the IndexScanOperator we have seperated reset and getNextTuple for clustered and unclustered indexes. The location of the code is in the physicaloperator/scan/IndexScanOperator.java file.
+---
 
-### an explanation on how you perform the root-to-leaf tree descent and which nodes are deserialized
-
-The root-to-leaf tree descent in the IndexScanOperator involves traversing the B+ Tree structure to locate the relevant 
-leaf node that may contain the desired records. Starting at the root node, the algorithm evaluates key ranges at each level
-of the tree, using the provided lowKey value (or a default starting point if lowKey is null) to determine the appropriate 
-child node to follow. This process continues iteratively until reaching the corresponding leaf node. During this traversal,
-only the internal nodes necessary to locate the leaf node and the relevant leaf nodes are deserialized from disk. 
-Deserialization is performed using the file channel and buffer (indexChannel and indexPageBuffer), 
-ensuring efficient access to nodes. Once the correct leaf node is reached, its entries are scanned to find matching 
-records within the specified key range. If no valid starting point exists, traversal stops, and no further nodes are deserialized.
 
 ## How to run the code
 To run the code, you can use the following command:
