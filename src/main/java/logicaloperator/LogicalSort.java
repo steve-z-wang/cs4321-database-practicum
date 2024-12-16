@@ -30,4 +30,9 @@ public class LogicalSort extends LogicalOperator {
   public void accept(LogicalOperatorVisitor visitor) {
     visitor.visit(this);
   }
+
+  @Override
+  public List<LogicalOperator> getChildren() {
+    return List.of(childOperator);
+  }
 }

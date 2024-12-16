@@ -2,6 +2,8 @@ package logicaloperator;
 
 import net.sf.jsqlparser.expression.Expression;
 
+import java.util.List;
+
 public class LogicalJoin extends LogicalOperator {
 
   private final LogicalOperator leftChild;
@@ -20,6 +22,10 @@ public class LogicalJoin extends LogicalOperator {
 
   public LogicalOperator getRightChild() {
     return rightChild;
+  }
+
+  public List<LogicalOperator> getChildren() {
+    return List.of(leftChild, rightChild);
   }
 
   public Expression getCondition() {
