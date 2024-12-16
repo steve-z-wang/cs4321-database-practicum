@@ -1,10 +1,10 @@
 package catalog;
 
-import net.sf.jsqlparser.schema.Column;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
+import model.Tuple;
+import net.sf.jsqlparser.schema.Column;
 
 public class TableStats {
 
@@ -15,6 +15,7 @@ public class TableStats {
 
   /**
    * Creates new TableStats instance for a given table
+   *
    * @param tableName Name of the table
    */
   public TableStats(String tableName) {
@@ -23,34 +24,55 @@ public class TableStats {
     this.columnStats = new HashMap<>();
   }
 
-  /**
-   * Updates statistics for a single tuple
-   * @param columnName Name of the column
-   * @param value Value in the tuple for this column
-   */
-  public void addTupleStats(String columnName, int value) {
-    columnStats.computeIfAbsent(columnName, k -> new ColumnStats())
-        .updateStats(value);
+  public String getTableName() {
+    return tableName;
+  }
+
+  public int getNumTuples() {
+    return numTuples;
+  }
+
+  public int getNumColumns() {
+    return columnStats.size();
   }
 
   /**
-   * Increments the total tuple count for this table
+   * Updates statistics for a single tuple
+   *
+   * @param columnName Name of the column
+   * @param value Value in the tuple for this column
    */
+  public void updateColumnStats(String columnName, int value) {
+    columnStats.computeIfAbsent(columnName, k -> new ColumnStats()).updateStats(value);
+  }
+
+  public ColumnStats getColumnStats(String columnName) {
+    return columnStats.get(columnName);
+  }
+
+  /** Convert a table to a table stats object the input is a binaryTupleReader */
+  public void updateStats(List<Column> schema, Tuple tuple) {
+    for (int i = 0; i < schema.size(); i++) {
+      Column column = schema.get(i);
+      updateColumnStats(column.getColumnName(), tuple.getElementAtIndex(i));
+    }
+  }
+
+  /** Increments the total tuple count for this table */
   public void incrementTupleCount() {
     numTuples++;
   }
 
-  /**
-   * Writes table statistics to a writer in the stats.txt format
-   */
+  /** Writes table statistics to a writer in the stats.txt format */
   public void serialize(BufferedWriter writer, List<Column> schema) throws IOException {
     writer.write(getStatsString(schema));
     writer.newLine();
   }
 
   /**
-   * Deserialize a TableStats object from a line of text from stats.txt
-   * Format: tableName numTuples col1,min1,max1 col2,min2,max2 ...
+   * Deserialize a TableStats object from a line of text from stats.txt Format: tableName numTuples
+   * col1,min1,max1 col2,min2,max2 ...
+   *
    * @param line The line to parse
    * @return A new TableStats object populated with the data from the line
    * @throws IOException If the line format is invalid
@@ -102,6 +124,7 @@ public class TableStats {
 
   /**
    * Writes statistics to the stats.txt file in the required format
+   *
    * @return Formatted string representation of table statistics
    */
   public String getStatsString(List<Column> schema) {
@@ -112,13 +135,14 @@ public class TableStats {
     for (Column column : schema) {
       String columnName = column.getColumnName();
       ColumnStats stats = columnStats.get(columnName);
-      sb.append(" ").append(columnName).append(",")
-          .append(stats.getMinValue()).append(",")
+      sb.append(" ")
+          .append(columnName)
+          .append(",")
+          .append(stats.getMinValue())
+          .append(",")
           .append(stats.getMaxValue());
     }
 
     return sb.toString();
   }
-
-
 }

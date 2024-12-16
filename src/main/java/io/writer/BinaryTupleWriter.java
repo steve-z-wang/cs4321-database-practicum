@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 public class BinaryTupleWriter extends TupleWriter {
   private final int TUPLE_SIZE;
-  private final int MAX_TUPLE_COUNT_PER_PAGE; // the maximum of tuple that can be hold on a page
+  private final int MAX_TUPLE_COUNT_PER_PAGE;
 
   private final Logger logger = LogManager.getLogger();
 
@@ -26,18 +26,14 @@ public class BinaryTupleWriter extends TupleWriter {
   private int bufferIndex;
   private int tupleCount;
 
-  // Primary constructor that handles all initialization
   public BinaryTupleWriter(FileChannel fileChannel, int tupleSize) {
     this.TUPLE_SIZE = tupleSize;
     this.MAX_TUPLE_COUNT_PER_PAGE = (TABLE_PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
     this.fileChannel = fileChannel;
     this.buffer = ByteBuffer.allocate(TABLE_PAGE_SIZE);
-    this.bufferIndex = 2 * INT_SIZE;
-    this.tupleCount = 0;
+    initializeBuffer();
   }
 
-  // For backward compatibility
-  // TODO: migrage all to use the fileChannel object creator
   public BinaryTupleWriter(String filePath, int tupleSize) {
     this.TUPLE_SIZE = tupleSize;
     this.MAX_TUPLE_COUNT_PER_PAGE = (TABLE_PAGE_SIZE - 2 * INT_SIZE) / (tupleSize * INT_SIZE);
@@ -51,64 +47,67 @@ public class BinaryTupleWriter extends TupleWriter {
     }
 
     this.buffer = ByteBuffer.allocate(TABLE_PAGE_SIZE);
+    initializeBuffer();
+  }
 
-    // start with an index
+  private void initializeBuffer() {
+    // Write initial tuple size and count at the start of the buffer
+    buffer.putInt(0, this.TUPLE_SIZE);
+    buffer.putInt(INT_SIZE, 0); // Initial tuple count is 0
     this.bufferIndex = 2 * INT_SIZE;
     this.tupleCount = 0;
   }
 
   @Override
   public void writeTuple(Tuple tuple) {
-
-    // check for remaining space on page
+    // Check if we need to write the current page
     if (tupleCount >= MAX_TUPLE_COUNT_PER_PAGE) {
       writePage();
     }
 
-    // write the tuple on buffer
+    // Write the tuple to buffer
     ArrayList<Integer> numbers = tuple.getAllElements();
-    int newBufferIndex = bufferIndex;
-    for (Integer num : numbers) {
-      buffer.putInt(newBufferIndex, num);
-      newBufferIndex += INT_SIZE;
+    if (numbers.size() != TUPLE_SIZE) {
+      throw new IllegalArgumentException(
+          "Tuple size mismatch. Expected: " + TUPLE_SIZE + ", Got: " + numbers.size());
     }
-    assert newBufferIndex == bufferIndex + TUPLE_SIZE * INT_SIZE;
 
-    // update index & count
-    bufferIndex = newBufferIndex;
+    for (Integer num : numbers) {
+      buffer.putInt(bufferIndex, num);
+      bufferIndex += INT_SIZE;
+    }
+
     tupleCount++;
+    // Update the tuple count in the buffer header
+    buffer.putInt(INT_SIZE, tupleCount);
   }
 
   private void writePage() {
-    for (; bufferIndex < TABLE_PAGE_SIZE; bufferIndex += INT_SIZE) {
-      buffer.putInt(bufferIndex, 0);
-    }
-
-    buffer.putInt(0, this.TUPLE_SIZE);
-    buffer.putInt(INT_SIZE, this.tupleCount);
-
     try {
+      // Fill remaining space with zeros
+      while (bufferIndex < TABLE_PAGE_SIZE) {
+        buffer.putInt(bufferIndex, 0);
+        bufferIndex += INT_SIZE;
+      }
+
+      // Write the complete page
+      buffer.position(0);
       fileChannel.write(buffer);
+
+      // Reset buffer for next page
+      buffer.clear();
+      initializeBuffer();
+
     } catch (IOException e) {
       logger.error("Error writing page: ", e);
     }
-
-    buffer.clear();
-    bufferIndex = 2 * INT_SIZE;
-    tupleCount = 0;
   }
 
   @Override
   public void close() {
-    // if we start writing a new page
+    // Write the final page if there's any data
     if (tupleCount > 0) {
       writePage();
-    }
-
-    try {
-      fileChannel.close();
-    } catch (IOException e) {
-      logger.error("Error closing BinaryTupleWriter: ", e);
     }
   }
 }

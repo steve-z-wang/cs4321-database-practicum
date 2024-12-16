@@ -37,7 +37,8 @@ public abstract class QueryTestBase {
     setupBaseDir(datasetSubDir);
 
     // Set up the database schema
-    DBCatalog.getInstance().setDataDirectory(baseDir + "/input/db");
+    DBCatalog.getInstance()
+        .setDataDirectory(baseDir + "/p2_join_methods_comparision_test_samples/input/db");
 
     // Parse the queries
     parseQueries();
@@ -57,7 +58,10 @@ public abstract class QueryTestBase {
   }
 
   private static void parseQueries() throws IOException, JSQLParserException {
-    String queriesContent = Files.readString(new File(baseDir + "/input/queries.sql").toPath());
+    String queriesContent =
+        Files.readString(
+            new File(baseDir + "/p2_join_methods_comparision_test_samples/input/queries.sql")
+                .toPath());
     statementList = CCJSqlParserUtil.parseStatements(queriesContent).getStatements();
   }
 

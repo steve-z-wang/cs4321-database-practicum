@@ -2,6 +2,8 @@ package config;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -89,16 +91,15 @@ public class PhysicalPlanConfig {
     logger.info("Reading config file: {}", configFile);
     try {
       BufferedReader br = new BufferedReader(new FileReader(configFile));
-      String config = br.readLine() + "\n" + br.readLine();
-      String[] lines = config.trim().split("\n");
+      List<String> lines = br.lines().limit(3).collect(Collectors.toList());
 
-      if (lines.length != 3) {
+      if (lines.size() != 3) {
         throw new IllegalArgumentException("Configuration must contain exactly three lines");
       }
 
-      parseJoinConfig(lines[0]);
-      parseSortConfig(lines[1]);
-      parseScanConfig(lines[2]);
+      parseJoinConfig(lines.get(0));
+      parseSortConfig(lines.get(1));
+      parseScanConfig(lines.get(2));
 
       br.close();
     } catch (Exception e) {

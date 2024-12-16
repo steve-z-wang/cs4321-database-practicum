@@ -51,30 +51,11 @@ public class Compiler {
       interpreterConfig = InterpreterConfig.getInstance();
       interpreterConfig.loadConfig(interpreterConfigFilePath);
 
-      // Set up the database catalog
-      DBCatalog.getInstance().setDataDirectory(interpreterConfig.getInputDir() + "/db");
-
-      // Set up the index config
-      IndexConfigManager.getInstance()
-          .loadConfig(interpreterConfig.getInputDir() + "/db/index_info.txt");
-      IndexConfigManager.getInstance().setIndexDir(interpreterConfig.getInputDir() + "/db/indexes");
-
-      // Set up the physical plan config
-      PhysicalPlanConfig.getInstance()
-          .loadConfig(interpreterConfig.getInputDir() + "/plan_builder_config.txt");
-
-      // Set up the cache directory
-      CacheFileManagerRegistry.getInstance().setCacheDirectory(interpreterConfig.getTempDir());
+      initializeDatabaseEnvironment();
 
       // Read and parse queries
-      String str = Files.readString(Paths.get(interpreterConfig + "/queries.sql"));
+      String str = Files.readString(Paths.get(interpreterConfig.getInputDir() + "/queries.sql"));
       Statements statements = CCJSqlParserUtil.parseStatements(str);
-
-      // Create Index
-      if (interpreterConfig.shouldBuildIndex()) {
-        IndexBuilder indexBuilder = new IndexBuilder();
-        indexBuilder.buildIndexes();
-      }
 
       // Run queries
       if (interpreterConfig.shuoldProcessQueries()) {
@@ -85,7 +66,31 @@ public class Compiler {
 
     } catch (Exception e) {
       System.err.println("Exception occurred in interpreter");
-      logger.error(e.getMessage());
+      logger.error(e.getStackTrace());
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static void initializeDatabaseEnvironment() throws IOException {
+    // Set up the database catalog
+    DBCatalog.getInstance().setDataDirectory(interpreterConfig.getInputDir() + "/db");
+
+    // Set up the index config
+    IndexConfigManager.getInstance()
+        .loadConfig(interpreterConfig.getInputDir() + "/db/index_info.txt");
+    IndexConfigManager.getInstance().setIndexDir(interpreterConfig.getInputDir() + "/db/indexes");
+
+    // Set up the physical plan config
+    PhysicalPlanConfig.getInstance()
+        .loadConfig(interpreterConfig.getInputDir() + "/plan_builder_config.txt");
+
+    // Set up the cache directory
+    CacheFileManagerRegistry.getInstance().setCacheDirectory(interpreterConfig.getTempDir());
+
+    // Create Index
+    if (interpreterConfig.shouldBuildIndex()) {
+      IndexBuilder indexBuilder = new IndexBuilder();
+      indexBuilder.buildIndexes();
     }
   }
 
@@ -96,7 +101,7 @@ public class Compiler {
     }
   }
 
-  private static void processQueries(Statements statements) {
+  static void processQueries(Statements statements) {
     int counter = 1; // for numbering output files
     for (Statement statement : statements.getStatements()) {
 
